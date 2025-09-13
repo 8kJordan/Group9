@@ -12,6 +12,20 @@
   <link rel="stylesheet" href="css/theme.css?v=1">
   <script defer src="js/contacts.js?v=1"></script>
 
+  <!-- EARLY AUTH GUARD: block cached renders before JS loads -->
+  <script>
+    (function () {
+      try {
+        if (!localStorage.getItem('cmUser')) {
+          // no login -> bounce to root/login
+          window.location.replace('/');
+        }
+      } catch (_) {
+        window.location.replace('/');
+      }
+    })();
+  </script>
+
   <!-- LOCAL TESTING SCRIPT. REMOVE. -->
   <script>
   if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') &&

@@ -18,7 +18,7 @@ function getUser(){
   try {
     const raw = localStorage.getItem('cmUser');
     if (!raw) { user = null; return null; }
-    user = JSON.parse(raw);  // refresh cache from storage
+    user = JSON.parse(raw);
     return user;
   } catch {
     user = null;
@@ -36,15 +36,17 @@ function requireUser(){
 }
 
 function logout(){
-  localStorage.removeItem('cmUser');
-  user = null;                 // clear memoized value
-  window.location.replace('/'); // replace so back doesn’t return here
+  try { localStorage.removeItem('cmUser'); } catch {}
+  user = null;
+  // replace() to pop contacts.html out of the history
+  window.location.replace('/');
 }
 
 function enforceAuth(){
   const u = getUser();
   if (!u || !u.id) {
-    window.location.replace('/'); 
+    // replace() so Back cannot return to contacts.html
+    window.location.replace('/');
     return false;
   }
   return true;
@@ -54,8 +56,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!enforceAuth()) return;
 
   const u = getUser();
-  document.querySelector('#who').textContent =
-    `Signed in as ${u.firstName} ${u.lastName}`;
+  const who = document.querySelector('#who');
+  if (who) who.textContent = `Signed in as ${u.firstName} ${u.lastName}`;
 
   const lb = document.getElementById('logoutBtn');
   if (lb) lb.addEventListener('click', (e) => {
@@ -66,8 +68,9 @@ window.addEventListener('DOMContentLoaded', () => {
   searchContacts();
 });
 
-// handle back/forward cache restores
-window.addEventListener('pageshow', () => {
+// Fires when page is restored from Back/Forward Cache
+window.addEventListener('pageshow', (e) => {
+  // On bfcache restore, re-enforce auth
   enforceAuth();
 });
 
