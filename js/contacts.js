@@ -35,11 +35,10 @@ function requireUser(){
   return u;
 }
 
-function logout(){
-  try { localStorage.removeItem('cmUser'); } catch {}
-  user = null;
-  // replace() to pop contacts.html out of the history
-  window.location.replace('/');
+async function logout(){
+  try { await fetch('/api/Logout.php', { method:'POST' }); } catch {}
+  localStorage.removeItem('cmUser'); // keep clearing your client cache for UI consistency
+  window.location.replace('/');      // replace() so Back won’t return to contacts
 }
 
 function enforceAuth(){

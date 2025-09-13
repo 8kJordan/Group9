@@ -49,6 +49,7 @@ try{
     $dbPassword = getenv("CONTACTS_APP_DB_PASS");
     $dbName = getenv("CONTACTS_APP_DB_NAME");
     $db = new mysqli("localhost", $dbUser, $dbPassword, $dbName);
+    $db->set_charset('utf8mb4');
 
 } catch (Exception $e){
     http_response_code(500);
@@ -82,7 +83,7 @@ try {
 
 $result = $query->get_result();
 
-processQueryResult($result, $payload["passwordHash"]);
+processQueryResult($result, $payload["passwordHash"], $payload["username"]);
 
 $query->close();
 $db->close();
@@ -92,12 +93,26 @@ function getRequestPayload(): array{
     return json_decode(file_get_contents("php://input"), true) ?? [];
 }
 
-function processQueryResult(mysqli_result $result, string $passHash){
+function processQueryResult(mysqli_result $result, string $passHash, string $login){
 
     $row = $result->fetch_assoc();
     if ($row && hash_equals($row["Password"], $passHash)) { // user is auth'd
         http_response_code(200);
-
+    // start a real login session and store user identity
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => !empty($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    session_start();
+    $_SESSION['user'] = [
+        'id'        => (int)$row['ID'],
+        'firstName' => $row['FirstName'],
+  'lastName'  => $row['LastName'],
+  'login'     => $login
+];
         echo json_encode([
             "status" => "success",
             "isAuthenticated" => true,
