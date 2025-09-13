@@ -37,8 +37,8 @@ function requireUser(){
 
 async function logout(){
   try { await fetch('/api/Logout.php', { method:'POST' }); } catch {}
-  localStorage.removeItem('cmUser'); // keep clearing your client cache for UI consistency
-  window.location.replace('/');      // replace() so Back won’t return to contacts
+  localStorage.removeItem('cmUser'); // keep client state clean for UI
+  window.location.replace('/');      // replace() so Back won't return to contacts
 }
 
 function enforceAuth(){
