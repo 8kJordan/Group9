@@ -82,6 +82,34 @@ section + section { margin-top: 1rem; }
   border-color: #1547cf;
 }
 
+/* Custom green outline for Save button */
+.btn-outline-green {
+  color: #3bd13b;
+  border: 2px solid #3bd13b;
+  font-weight: 500;
+  background: transparent;
+  transition: all .2s ease;
+}
+.btn-outline-green:hover {
+  background: #3bd13b;
+  color: #fff;
+  border-color: #3bd13b;
+}
+
+/* Custom grey outline for Clear button */
+.btn-outline-grey {
+  color: #333633;
+  border: 2px solid #333633;
+  font-weight: 500;
+  background: transparent;
+  transition: all .2s ease;
+}
+.btn-outline-grey:hover {
+  background: #333633;
+  color: #fff;
+  border-color: #333633;
+}
+
 .table td, .table th { vertical-align: middle; }
 
 footer {

@@ -6,8 +6,10 @@ async function api(path, body){
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify(body||{})
   });
-  if(!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
+  let data;
+  try { data = await r.json(); }
+  catch { data = { status:'ERROR', desc:'Non-JSON response' }; }
+  return data;
 }
 
 let user = null;

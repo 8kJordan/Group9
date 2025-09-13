@@ -1,4 +1,3 @@
-
 async function api(path, body) {
   const r = await fetch(`/api/${path}`, {
     method: 'POST',
@@ -64,25 +63,6 @@ async function doLogin(e) {
   }
 }
 
-async function addContact(e){
-  e.preventDefault();
-  const userId = Number(document.querySelector('#userId').value);
-  const firstName = document.querySelector('#first').value.trim();
-  const lastName = document.querySelector('#last').value.trim();
-  const phone = document.querySelector('#phone').value.trim();
-  const email = document.querySelector('#email').value.trim();
-  const res = await api('AddContact.php', {userId, firstName, lastName, phone, email});
-  document.querySelector('#out').textContent = res.error || `Added contact #${res.id}`;
-}
-
-async function searchContacts(e){
-  e.preventDefault();
-  const userId = Number(document.querySelector('#userId').value);
-  const search = document.querySelector('#search').value.trim();
-  const res = await api('SearchContacts.php', {userId, search});
-  document.querySelector('#results').textContent = JSON.stringify(res.results, null, 2);
-}
-
 // Register
 async function doRegister(e) {
   e.preventDefault();
@@ -92,7 +72,6 @@ async function doRegister(e) {
   const password = document.querySelector('#regPassword').value;
   const confirm  = document.querySelector('#regConfirm').value;
   const out = document.querySelector('#registerOut');
-
   if (!firstName || !lastName || !username || !password) {
     out.textContent = 'Please fill out all fields.';
     return;
