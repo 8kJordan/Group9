@@ -1,4 +1,4 @@
-let user = null;
+
 
 async function api(path, body){
   const r = await fetch(`/api/${path}`, {
@@ -10,14 +10,18 @@ async function api(path, body){
   return r.json();
 }
 
+let user = null;
+
 function getUser(){
-  if(user) return user;
-  try{
+  try {
     const raw = localStorage.getItem('cmUser');
-    if(!raw) return null;
-    user = JSON.parse(raw);
+    if (!raw) { user = null; return null; }
+    user = JSON.parse(raw);  // refresh cache from storage
     return user;
-  }catch{ return null; }
+  } catch {
+    user = null;
+    return null;
+  }
 }
 
 function requireUser(){
@@ -30,11 +34,41 @@ function requireUser(){
 }
 
 function logout(){
-  //clear locally stored user info
   localStorage.removeItem('cmUser');
-  //redirect to index/login
-  window.location.href = '/';
+  user = null;                 // clear memoized value
+  window.location.replace('/'); // replace so back doesn’t return here
 }
+
+function enforceAuth(){
+  const u = getUser();
+  if (!u || !u.id) {
+    window.location.replace('/'); 
+    return false;
+  }
+  return true;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (!enforceAuth()) return;
+
+  const u = getUser();
+  document.querySelector('#who').textContent =
+    `Signed in as ${u.firstName} ${u.lastName}`;
+
+  const lb = document.getElementById('logoutBtn');
+  if (lb) lb.addEventListener('click', (e) => {
+    e.preventDefault();
+    logout();
+  });
+
+  searchContacts();
+});
+
+// handle back/forward cache restores
+window.addEventListener('pageshow', () => {
+  enforceAuth();
+});
+
 window.logout = logout; //make global
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -43,9 +77,9 @@ window.addEventListener('DOMContentLoaded', () => {
   document.querySelector('#who').textContent = `Signed in as ${u.firstName} ${u.lastName}`;
 
   //logout button hookup
-  const lb = document.querySelector('logoutBtn');
-  if (lb) lb.addEventListener('click', logout);
-
+  logoutBtn.addEventListener('click', () => {
+      logout();
+  });
   searchContacts();
 });
 
