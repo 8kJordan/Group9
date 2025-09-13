@@ -1,3 +1,19 @@
+<?php
+declare(strict_types=1);
+session_start();
+
+// prevent serving cached copies of a protected page
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
+if (empty($_SESSION['user']['id'])) {
+  header('Location: /');
+  exit;
+}
+$user = $_SESSION['user'];
+?>
+
 <!doctype html>
 <html lang="en" data-bs-theme="light">
 <head>
@@ -77,7 +93,7 @@
 <body>
   <nav class="navbar bg-body-tertiary">
     <div class="container d-flex justify-content-between align-items-center">
-      <a class="navbar-brand d-flex align-items-center gap-2" >
+      <a class="navbar-brand d-flex align-items-center gap-2" href="/">
         <i class="bi bi-journal-bookmark"></i> Contact Manager
       </a>
       <div class="d-flex align-items-center gap-3">
@@ -226,5 +242,20 @@
     }
   });
 </script>
+
+<!-- ADDITIVE: ensure logout calls server, clears client, then redirects -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('logoutBtn');
+  if (!btn) return;
+  btn.addEventListener('click', async function(e){
+    e.preventDefault();
+    try { await fetch('/api/Logout.php', { method:'POST' }); } catch(e) {}
+    try { localStorage.removeItem('cmUser'); } catch(e) {}
+    window.location.replace('/');
+  });
+});
+</script>
 </body>
 </html>
+
