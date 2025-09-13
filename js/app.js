@@ -42,7 +42,7 @@ async function doLogin(e) {
       };
       localStorage.setItem('cmUser', JSON.stringify(user));
       out.textContent = `Welcome, ${user.firstName || username}! Redirecting...`;
-      window.location.href = '/contacts.html';
+      window.location.href = '/contacts.php';
       return;
     }
 
