@@ -45,7 +45,7 @@ async function doLogin(e) {
       out.textContent = `Welcome, ${user.firstName || username}! Redirecting...`;
 
       // ✅ send to gated page
-      window.location.href = '/contacts.php';
+      window.location.href = '/contacts.html';
       return;
     }
 
