@@ -26,7 +26,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     ]);
     exit();
 }
-
+// check user id exists 
 if (!isset($payload["userId"])) {
     http_response_code(400);
     echo json_encode([
@@ -39,6 +39,33 @@ if (!isset($payload["userId"])) {
 
 $userId = (int)$payload["userId"];
 $search = trim((string)($payload["search"] ?? ""));
+
+// make sure the query wont cook the DB 
+if (strlen($search) > 100) {
+    http_response_code(400);
+    echo json_encode([
+        "status"  => "error",
+        "errType" => "InvalidInput",
+        "desc"    => "Search term too long"
+    ]);
+    exit();
+}
+// pagination params
+$page = (int)$payload["page"];
+$limit = (int)$payload["limit"]; 
+
+// definitely don't allow division by zero
+if ($page == 0) {
+    $page = 1;
+}
+
+if ($limit == 0) {
+    $limit = 20;
+}
+
+// calc pagination
+$offset = ($page - 1) * $limit;  
+$actualLimit = $limit + 1;
 
 // DB connect
 try {
@@ -68,9 +95,10 @@ if ($search === "") {
                 Email     AS email
          FROM Contacts
          WHERE UserId = ?
-         ORDER BY LastName, FirstName"
+         ORDER BY LastName, FirstName
+         LIMIT ? OFFSET ?"
     );
-    $stmt->bind_param("i", $userId);
+    $stmt->bind_param("iii", $userId, $actualLimit, $offset);
 } else {
     $like = "%".$search."%";
     $stmt = $db->prepare(
@@ -82,23 +110,46 @@ if ($search === "") {
          FROM Contacts
          WHERE UserId = ?
            AND (FirstName LIKE ? OR LastName LIKE ? OR Phone LIKE ? OR Email LIKE ?)
-         ORDER BY LastName, FirstName"
+         ORDER BY LastName, FirstName
+         LIMIT ? OFFSET ?"
     );
-    $stmt->bind_param("issss", $userId, $like, $like, $like, $like);
+    $stmt->bind_param("isssiii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
 }
 
-$stmt->execute();
-$res = $stmt->get_result();
+try {
+    $stmt->execute();
+    $res = $stmt->get_result();
 
-$rows = [];
-while ($row = $res->fetch_assoc()) {
-    $rows[] = $row;
+   $rows = [];
+    while ($row = $res->fetch_assoc()) {
+        $rows[] = $row;
+    }
+
+    // check if we get more than one page of results, remove the last one if so
+    $hasNextPage = count($rows) > $limit;
+    if ($hasNextPage) {
+        array_pop($rows);
+    }
+
+    echo json_encode([
+        "status"  => "success",
+        "results" => $rows,
+        "pagination" => [
+            "currentPage" => $page,
+            "hasNextPage" => $hasNextPage
+        ]
+    ]);
+} catch (mysqli_sql_exception $e) {
+    // uh oh something went wrong
+    http_response_code(500);
+    echo json_encode([
+        "status" => "error",
+        "errType" => "DatabaseError", 
+        "desc" => "Search query failed"
+    ]);
+    error_log("Search query error: " . $e->getMessage());
 }
 
-echo json_encode([
-    "status"  => "success",
-    "results" => $rows
-]);
 
 $stmt->close();
 $db->close();
