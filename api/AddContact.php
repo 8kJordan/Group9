@@ -38,7 +38,7 @@ if (isset($payload["firstName"],
         $payload["userId"]) === false){
     http_response_code(400);
     echo json_encode([
-        "status" => "ERROR",
+        "status" => "error",
         "errType" => "InvalidSchema",
         "desc" => "Invalid request schema"
     ]);
@@ -110,7 +110,7 @@ try{
             "errType" => "NonexistentUserIDError",
             "desc" => "The specified user ID does not exist"
         ]);
-    } elseif ($errCode == 1062){ # duplicate unique entry error TODO this would be the conditional that checks for duplicate phone or email from a DB err
+    } elseif ($errCode == 1062){ # duplicate unique entry error
         $userId = $payload["userId"];
         http_response_code(400);
 
