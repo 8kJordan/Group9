@@ -75,18 +75,6 @@ window.addEventListener('pageshow', (e) => {
 
 window.logout = logout; //make global
 
-window.addEventListener('DOMContentLoaded', () => {
-  const u = requireUser();
-  if(!u) return;
-  document.querySelector('#who').textContent = `Signed in as ${u.firstName} ${u.lastName}`;
-
-  //logout button hookup
-  logoutBtn.addEventListener('click', () => {
-      logout();
-  });
-  searchContacts();
-});
-
 function resetForm(){
   document.querySelector('#contactId').value = '';
   document.querySelector('#cFirst').value = '';
@@ -180,12 +168,18 @@ async function searchContacts(e){
 
   const term = document.querySelector('#search').value.trim();
   try{
-    const res = await api('SearchContacts.php', { userId: u.id, search: term });
-    if(res.error){ renderResults([]); document.querySelector('#resultsBody').innerHTML = `<tr><td colspan="5" class="muted">${esc(res.error)}</td></tr>`; return; }
-    renderResults(res.results);
-  }catch(err){
-    document.querySelector('#resultsBody').innerHTML = '<tr><td colspan="5" class="muted">Network error.</td></tr>';
+  const res = await api('SearchContacts.php', { userId: u.id, search: term });
+  if (res.status !== 'success') {
+    renderResults([]);
+    document.querySelector('#resultsBody').innerHTML =
+      `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
+    return;
   }
+  renderResults(res.results);
+}catch(err){
+  document.querySelector('#resultsBody').innerHTML =
+    '<tr><td colspan="5" class="muted">Network error.</td></tr>';
+}
 }
 
 function editContact(data){
@@ -207,4 +201,12 @@ async function deleteContact(id){
   }catch(err){
     alert('Network error.');
   }
+
+//ensure globals
+window.saveContact    = saveContact;
+window.searchContacts = searchContacts;
+window.deleteContact  = deleteContact;
+window.resetForm      = resetForm;
+window.logout         = logout;
+
 }

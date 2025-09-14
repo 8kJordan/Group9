@@ -29,7 +29,22 @@ $user = $_SESSION['user'];
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Theme overrides -->
   <link rel="stylesheet" href="css/theme.css?v=1">
-  <script defer src="js/contacts.js?v=1"></script>
+
+<script>
+  (function(){
+    try{
+      if(!localStorage.getItem('cmUser')){
+        const u = <?php echo json_encode([
+          'id'=>$user['id'],
+          'firstName'=>$user['firstName'] ?? '',
+          'lastName'=>$user['lastName'] ?? '',
+          'username'=>$user['username'] ?? ''
+        ], JSON_UNESCAPED_SLASHES); ?>;
+        if (u && u.id) localStorage.setItem('cmUser', JSON.stringify(u));
+      }
+    }catch(e){}
+  })();
+</script>
 
   <!-- EARLY AUTH GUARD: block cached renders before JS loads -->
   <script>
@@ -59,11 +74,11 @@ $user = $_SESSION['user'];
   }
 </script>
 
-<script defer src="/js/contacts.js?v=5"></script>
+<script defer src="/js/contacts.js?v=7"></script>
 
 
   <!-- JS Script -->
-  <script defer src="/js/contacts.js"></script>
+
 </head>
 
 <script>
