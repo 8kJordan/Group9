@@ -92,10 +92,11 @@ try{
     http_response_code(200);
 
     echo json_encode([
-        "status" => "success",
-        "contactCreated" => true,
-        "contactId" => $query->insert_id
+    "status" => "success",
+    "contactCreated" => true,
+    "id" => $db->insert_id
     ]);
+
 } catch (Exception $e){
     $errMessage = $e->getMessage();
     $errCode = $e->getCode();
@@ -141,10 +142,9 @@ function contactExists(mysqli $conn, array $payload): bool{
 
     $query->execute();
     $result = $query->get_result();
+    $row = $result->fetch_assoc();
+    $returnValue = (intval($row['cnt']) > 0);
 
-    $returnValue = true;
-    if($result->fetch_assoc()["cnt"] === 0)
-        $returnValue = false;
 
     $query->close();
     return $returnValue;

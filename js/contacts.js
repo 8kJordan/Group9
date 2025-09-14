@@ -119,11 +119,12 @@ async function saveContact(e){
     }else{
       res = await api('AddContact.php', { userId: u.id, firstName, lastName, phone, email });
     }
-    if(res.error){
-      out.textContent = res.error;
-      return;
+    if (res.status !== 'success') {
+    out.textContent = res.desc || 'Error';
+    return;
     }
-    out.textContent = id ? 'Contact updated.' : `Added contact #${res.id}.`;
+    out.textContent = id ? 'Contact updated.' : `Added contact #${res.id ?? res.contactId ?? ''}.`;
+
     resetForm();
     await searchContacts();
   }catch(err){
@@ -200,9 +201,9 @@ async function deleteContact(id){
   const u = requireUser(); if(!u) return;
   if(!confirm('Delete this contact?')) return;
   try{
-    const res = await api('DeleteContact.php', { userId: u.id, contactId: id });
-    if(res.error){ alert(res.error); return; }
-    await searchContacts();
+  const res = await api('DeleteContact.php', { userId: u.id, contactId: id });
+  if (res.status !== 'success') { alert(res.desc || 'Delete failed.'); return; }
+  await searchContacts();
   }catch(err){
     alert('Network error.');
   }
