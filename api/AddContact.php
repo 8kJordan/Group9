@@ -137,8 +137,22 @@ try{
 
 function contactExists(mysqli $conn, array $payload): bool{
     # gathers count of rows of contacts that meet the given conditions
-    $query = $conn->prepare("SELECT COUNT(*) AS cnt FROM Contacts WHERE ((Email = ? OR Phone = ?)AND UserId = ?)");
-    $query->bind_param("ssi", $payload["email"], $payload["phone"], $payload["userId"]);
+    $query = $conn->prepare("
+    SELECT COUNT(*) AS cnt
+    FROM Contacts
+    WHERE FirstName = ? 
+      AND LastName  = ? 
+      AND Email     = ? 
+      AND Phone     = ? 
+      AND UserId    = ?
+    ");
+
+    $query->bind_param("ssssi",
+        $payload["firstName"],
+        $payload["lastName"],
+        $payload["email"],
+        $payload["phone"],
+        $payload["userId"]);
 
     $query->execute();
     $result = $query->get_result();
