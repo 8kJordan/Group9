@@ -60,24 +60,14 @@ $user = $_SESSION['user'];
     })();
   </script>
 
-  <!-- LOCAL TESTING SCRIPT. REMOVE. -->
-  <script>
-  if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') &&
-      !localStorage.getItem('cmUser')) {
-    localStorage.setItem('cmUser', JSON.stringify({id: 1, firstName:'Dev', lastName:'User', username:'dev'}));
-  }
-</script>
-
 <script>
   if (location.hostname === 'www.group9-contacts.com') {
     location.replace('https://group9-contacts.com' + location.pathname + location.search + location.hash);
   }
 </script>
 
-<script defer src="/js/contacts.js?v=8"></script>
-
-
   <!-- JS Script -->
+<script defer src="/js/contacts.js?v=8"></script>
 
 </head>
 
@@ -196,11 +186,11 @@ $user = $_SESSION['user'];
           </tbody>
         </table>
         <!-- Pagination row -->
-<div class="d-flex align-items-center gap-2 mt-3">
-  <button id="prevBtn" type="button" class="btn btn-outline-secondary">Prev</button>
-  <button id="nextBtn" type="button" class="btn btn-outline-secondary">Next</button>
-  <span id="pageInfo" class="ms-2 text-muted"></span>
-</div>
+        <div class="d-flex align-items-center justify-content-end gap-2 mt-2">
+          <button id="prevBtn" type="button" class="btn btn-outline-secondary">Prev</button>
+          <button id="nextBtn" type="button" class="btn btn-outline-secondary">Next</button>
+          <span id="pageInfo" class="ms-2 text-muted"></span>
+        </div>
       </div>
     </div>
   </div>
