@@ -1,8 +1,27 @@
+<?php
+declare(strict_types=1);
+session_start();
+
+// prevent serving cached copies of a protected page
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
+if (empty($_SESSION['user']['id'])) {
+  header('Location: /');
+  exit;
+}
+$user = $_SESSION['user'];
+?>
+
 <!doctype html>
 <html lang="en" data-bs-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -10,7 +29,36 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Theme overrides -->
   <link rel="stylesheet" href="css/theme.css?v=1">
-  <script defer src="js/contacts.js?v=1"></script>
+
+<script>
+  (function(){
+    try{
+      if(!localStorage.getItem('cmUser')){
+        const u = <?php echo json_encode([
+          'id'=>$user['id'],
+          'firstName'=>$user['firstName'] ?? '',
+          'lastName'=>$user['lastName'] ?? '',
+          'username'=>$user['username'] ?? ''
+        ], JSON_UNESCAPED_SLASHES); ?>;
+        if (u && u.id) localStorage.setItem('cmUser', JSON.stringify(u));
+      }
+    }catch(e){}
+  })();
+</script>
+
+  <!-- EARLY AUTH GUARD: block cached renders before JS loads -->
+  <script>
+    (function () {
+      try {
+        if (!localStorage.getItem('cmUser')) {
+          // no login -> bounce to root/login
+          window.location.replace('/');
+        }
+      } catch (_) {
+        window.location.replace('/');
+      }
+    })();
+  </script>
 
   <!-- LOCAL TESTING SCRIPT. REMOVE. -->
   <script>
@@ -20,8 +68,17 @@
   }
 </script>
 
+<script>
+  if (location.hostname === 'www.group9-contacts.com') {
+    location.replace('https://group9-contacts.com' + location.pathname + location.search + location.hash);
+  }
+</script>
+
+<script defer src="/js/contacts.js?v=7"></script>
+
+
   <!-- JS Script -->
-  <script defer src="/js/contacts.js"></script>
+
 </head>
 
 <script>
@@ -200,5 +257,20 @@
     }
   });
 </script>
+
+<!-- ADDITIVE: ensure logout calls server, clears client, then redirects -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('logoutBtn');
+  if (!btn) return;
+  btn.addEventListener('click', async function(e){
+    e.preventDefault();
+    try { await fetch('/api/Logout.php', { method:'POST' }); } catch(e) {}
+    try { localStorage.removeItem('cmUser'); } catch(e) {}
+    window.location.replace('/');
+  });
+});
+</script>
 </body>
 </html>
+

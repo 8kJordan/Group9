@@ -1,4 +1,4 @@
-let user = null;
+
 
 async function api(path, body){
   const r = await fetch(`/api/${path}`, {
@@ -12,14 +12,18 @@ async function api(path, body){
   return data;
 }
 
+let user = null;
+
 function getUser(){
-  if(user) return user;
-  try{
+  try {
     const raw = localStorage.getItem('cmUser');
-    if(!raw) return null;
+    if (!raw) { user = null; return null; }
     user = JSON.parse(raw);
     return user;
-  }catch{ return null; }
+  } catch {
+    user = null;
+    return null;
+  }
 }
 
 function requireUser(){
@@ -31,25 +35,45 @@ function requireUser(){
   return u;
 }
 
-function logout(){
-  //clear locally stored user info
-  localStorage.removeItem('cmUser');
-  //redirect to index/login
-  window.location.href = '/';
+async function logout(){
+  try { await fetch('/api/Logout.php', { method:'POST' }); } catch {}
+  localStorage.removeItem('cmUser'); // keep client state clean for UI
+  window.location.replace('/');      // replace() so Back won't return to contacts
 }
-window.logout = logout; //make global
+
+function enforceAuth(){
+  const u = getUser();
+  if (!u || !u.id) {
+    // replace() so Back cannot return to contacts.html
+    window.location.replace('/');
+    return false;
+  }
+  return true;
+}
 
 window.addEventListener('DOMContentLoaded', () => {
-  const u = requireUser();
-  if(!u) return;
-  document.querySelector('#who').textContent = `Signed in as ${u.firstName} ${u.lastName}`;
+  if (!enforceAuth()) return;
 
-  //logout button hookup
-  const lb = document.querySelector('logoutBtn');
-  if (lb) lb.addEventListener('click', logout);
+  const u = getUser();
+  const who = document.querySelector('#who');
+  if (who) who.textContent = `Signed in as ${u.firstName} ${u.lastName}`;
+
+  const lb = document.getElementById('logoutBtn');
+  if (lb) lb.addEventListener('click', (e) => {
+    e.preventDefault();
+    logout();
+  });
 
   searchContacts();
 });
+
+// Fires when page is restored from Back/Forward Cache
+window.addEventListener('pageshow', (e) => {
+  // On bfcache restore, re-enforce auth
+  enforceAuth();
+});
+
+window.logout = logout; //make global
 
 function resetForm(){
   document.querySelector('#contactId').value = '';
@@ -83,11 +107,12 @@ async function saveContact(e){
     }else{
       res = await api('AddContact.php', { userId: u.id, firstName, lastName, phone, email });
     }
-    if(res.error){
-      out.textContent = res.error;
-      return;
+    if (res.status !== 'success') {
+    out.textContent = res.desc || 'Error';
+    return;
     }
-    out.textContent = id ? 'Contact updated.' : `Added contact #${res.id}.`;
+    out.textContent = id ? 'Contact updated.' : `Added contact #${res.id ?? res.contactId ?? ''}.`;
+
     resetForm();
     await searchContacts();
   }catch(err){
@@ -143,12 +168,18 @@ async function searchContacts(e){
 
   const term = document.querySelector('#search').value.trim();
   try{
-    const res = await api('SearchContacts.php', { userId: u.id, search: term });
-    if(res.error){ renderResults([]); document.querySelector('#resultsBody').innerHTML = `<tr><td colspan="5" class="muted">${esc(res.error)}</td></tr>`; return; }
-    renderResults(res.results);
-  }catch(err){
-    document.querySelector('#resultsBody').innerHTML = '<tr><td colspan="5" class="muted">Network error.</td></tr>';
+  const res = await api('SearchContacts.php', { userId: u.id, search: term });
+  if (res.status !== 'success') {
+    renderResults([]);
+    document.querySelector('#resultsBody').innerHTML =
+      `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
+    return;
   }
+  renderResults(res.results);
+}catch(err){
+  document.querySelector('#resultsBody').innerHTML =
+    '<tr><td colspan="5" class="muted">Network error.</td></tr>';
+}
 }
 
 function editContact(data){
@@ -164,10 +195,18 @@ async function deleteContact(id){
   const u = requireUser(); if(!u) return;
   if(!confirm('Delete this contact?')) return;
   try{
-    const res = await api('DeleteContact.php', { userId: u.id, contactId: id });
-    if(res.error){ alert(res.error); return; }
-    await searchContacts();
+  const res = await api('DeleteContact.php', { userId: u.id, contactId: id });
+  if (res.status !== 'success') { alert(res.desc || 'Delete failed.'); return; }
+  await searchContacts();
   }catch(err){
     alert('Network error.');
   }
+
+//ensure globals
+window.saveContact    = saveContact;
+window.searchContacts = searchContacts;
+window.deleteContact  = deleteContact;
+window.resetForm      = resetForm;
+window.logout         = logout;
+
 }

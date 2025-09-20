@@ -1,91 +1,96 @@
 <?php
 declare(strict_types=1);
-
 header('Content-Type: application/json');
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-$method = $_SERVER["REQUEST_METHOD"];
-
-if ($method !== "DELETE"){
-    $data = [
-        "status" => "error",
+// method gate
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(400);
+    echo json_encode([
+        "status"  => "error",
         "errType" => "InvalidRequest",
-        "desc" => "Method $method is invalid"
-    ];
-
-    http_response_code(400);
-    echo json_encode($data);
+        "desc"    => "Only POST allowed"
+    ]);
     exit();
 }
 
+// parse payload
+$raw = file_get_contents("php://input");
+$payload = json_decode($raw, true);
 
-$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-if ($id === null){
+if (json_last_error() !== JSON_ERROR_NONE) {
     http_response_code(400);
     echo json_encode([
-        "status" => "error",
+        "status"  => "error",
+        "errType" => "InvalidJson",
+        "desc"    => "Invalid JSON payload"
+    ]);
+    exit();
+}
+
+if (!isset($payload["userId"], $payload["contactId"])) {
+    http_response_code(400);
+    echo json_encode([
+        "status"  => "error",
         "errType" => "InvalidSchema",
-        "desc" => "Missing Contact ID"
+        "desc"    => "Missing userId or contactId"
     ]);
     exit();
-}elseif ($id === false){
-    http_response_code(400);
-    echo json_encode([
-        "status" => "error",
-        "errType" => "InvalidInputData",
-        "desc" => "Invalid Contact ID"
-    ]);
 }
 
+$userId    = (int)$payload["userId"];
+$contactId = (int)$payload["contactId"];
 
-try{
-    // setting up db connection
-    $dbUser = getenv("CONTACTS_APP_DB_USER");
-    $dbPassword = getenv("CONTACTS_APP_DB_PASS");
-    $dbName = getenv("CONTACTS_APP_DB_NAME");
-    $db = new mysqli("localhost", $dbUser, $dbPassword, $dbName);
-
-} catch (Exception $e){
+//DB connect
+try {
+    $db = new mysqli(
+        "localhost",
+        getenv("CONTACTS_APP_DB_USER"),
+        getenv("CONTACTS_APP_DB_PASS"),
+        getenv("CONTACTS_APP_DB_NAME")
+    );
+} catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
-        "status" => "error",
+        "status"  => "error",
         "errType" => "ServerError",
-        "desc" => "Failed to make DB connection"
+        "desc"    => "Failed to connect to database"
     ]);
     exit();
 }
 
-$query = $db->prepare("DELETE FROM Contacts WHERE ID = ?");
-$query->bind_param("i", $id);
+try {
+    // Scoped delete: only delete if owned by this user
+    $stmt = $db->prepare("DELETE FROM Contacts WHERE ID = ? AND UserId = ?");
+    $stmt->bind_param("ii", $contactId, $userId);
+    $stmt->execute();
 
-try{
-    $query->execute();
-
-    if ($query->affected_rows > 0){
+    if ($stmt->affected_rows > 0) {
         http_response_code(200);
         echo json_encode([
-            "status" => "success",
-            "contactDeleted" => true
+            "status"        => "success",
+            "contactDeleted"=> true,
+            "id"            => $contactId
         ]);
-    }
-    else{
+    } else {
         http_response_code(400);
         echo json_encode([
-            "status" => "error",
-            "contactDeleted" => false,
-            "errType" => "NonExistentContactError",
-            "desc" => "Contact not found"
+            "status"        => "error",
+            "contactDeleted"=> false,
+            "errType"       => "NonExistentContactError",
+            "desc"          => "Contact not found for this user"
         ]);
     }
-} catch (Exception $e){
-    http_response_code(500);
 
+    $stmt->close();
+} catch (Exception $e) {
+    http_response_code(500);
     echo json_encode([
-        "status" => "error",
-        "contactDeleted" => false,
-        "errType" => "ContactDeletionError",
-        "desc" => "Failed to delete contact"
+        "status"        => "error",
+        "contactDeleted"=> false,
+        "errType"       => "ContactDeletionError",
+        "desc"          => "Failed to delete contact"
     ]);
 } finally {
-    $query->close();
     $db->close();
 }

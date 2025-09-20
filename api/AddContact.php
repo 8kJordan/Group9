@@ -38,7 +38,7 @@ if (isset($payload["firstName"],
         $payload["userId"]) === false){
     http_response_code(400);
     echo json_encode([
-        "status" => "ERROR",
+        "status" => "error",
         "errType" => "InvalidSchema",
         "desc" => "Invalid request schema"
     ]);
@@ -92,10 +92,11 @@ try{
     http_response_code(200);
 
     echo json_encode([
-        "status" => "success",
-        "contactCreated" => true,
-        "contactId" => $query->insert_id
+    "status" => "success",
+    "contactCreated" => true,
+    "id" => $db->insert_id
     ]);
+
 } catch (Exception $e){
     $errMessage = $e->getMessage();
     $errCode = $e->getCode();
@@ -109,7 +110,7 @@ try{
             "errType" => "NonexistentUserIDError",
             "desc" => "The specified user ID does not exist"
         ]);
-    } elseif ($errCode == 1062){ # duplicate unique entry error TODO this would be the conditional that checks for duplicate phone or email from a DB err
+    } elseif ($errCode == 1062){ # duplicate unique entry error
         $userId = $payload["userId"];
         http_response_code(400);
 
@@ -136,15 +137,28 @@ try{
 
 function contactExists(mysqli $conn, array $payload): bool{
     # gathers count of rows of contacts that meet the given conditions
-    $query = $conn->prepare("SELECT COUNT(*) AS cnt FROM Contacts WHERE ((Email = ? OR Phone = ?)AND UserId = ?)");
-    $query->bind_param("ssi", $payload["email"], $payload["phone"], $payload["userId"]);
+    $query = $conn->prepare("
+    SELECT COUNT(*) AS cnt
+    FROM Contacts
+    WHERE FirstName = ? 
+      AND LastName  = ? 
+      AND Email     = ? 
+      AND Phone     = ? 
+      AND UserId    = ?
+    ");
+
+    $query->bind_param("ssssi",
+        $payload["firstName"],
+        $payload["lastName"],
+        $payload["email"],
+        $payload["phone"],
+        $payload["userId"]);
 
     $query->execute();
     $result = $query->get_result();
+    $row = $result->fetch_assoc();
+    $returnValue = (intval($row['cnt']) > 0);
 
-    $returnValue = true;
-    if($result->fetch_assoc()["cnt"] === 0)
-        $returnValue = false;
 
     $query->close();
     return $returnValue;

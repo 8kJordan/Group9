@@ -24,15 +24,16 @@ async function doLogin(e) {
   const username = document.querySelector('#login').value.trim();
   const password = document.querySelector('#password').value;
   const out = document.querySelector('#out');
+
   if (!username || !password) {
     out.textContent = 'Please enter your username and password.';
     return;
   }
+
   try {
     const passwordHash = await sha256Hex(password);
     const res = await api('Auth.php', { username, passwordHash });
 
-    // expect the new shape from Auth.php
     if (res && res.status === 'success' && res.isAuthenticated === true && res.userId) {
       const user = {
         id: res.userId,
@@ -42,23 +43,21 @@ async function doLogin(e) {
       };
       localStorage.setItem('cmUser', JSON.stringify(user));
       out.textContent = `Welcome, ${user.firstName || username}! Redirecting...`;
-      window.location.href = '/contacts.html';
+
+      // ✅ send to gated page
+      window.location.href = '/contacts.php';
       return;
     }
 
-    // handle failure cases
     if (res && res.status === 'success' && res.isAuthenticated === false) {
-      if (res.userExists === false) {
-        out.textContent = 'No account found for that username.';
-      } else {
-        out.textContent = 'Incorrect password.';
-      }
+      out.textContent = res.userExists === false
+        ? 'No account found for that username.'
+        : 'Incorrect password.';
       return;
     }
 
-    // fallback
     out.textContent = res?.desc || res?.error || 'Login failed.';
-  } catch (err) {
+  } catch {
     out.textContent = 'Network error while logging in.';
   }
 }
