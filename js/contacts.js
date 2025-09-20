@@ -1,3 +1,7 @@
+let currentPage = 1;
+let hasNextPage = false;
+let currentSearchTerm = '';
+
 async function api(path, body){
   const r = await fetch(`/api/${path}`, {
     method: 'POST',
@@ -160,25 +164,95 @@ function renderResults(rows){
   });
 }
 
-async function searchContacts(e){
+async function searchContacts(e, page = 1){
   if(e) e.preventDefault();
   const u = requireUser(); if(!u) return;
 
   const term = document.querySelector('#search').value.trim();
+  currentSearchTerm = term;
+  currentPage = page;
+  
   try{
-  const res = await api('SearchContacts.php', { userId: u.id, search: term });
-  if (res.status !== 'success') {
-    renderResults([]);
+    const res = await api('SearchContacts.php', { 
+      userId: u.id, 
+      search: term,
+      page: currentPage,
+      limit: 5 // Match the limit in your backend
+    });
+    
+    if (res.status !== 'success') {
+      renderResults([]);
+      document.querySelector('#resultsBody').innerHTML =
+        `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
+      return;
+    }
+    
+    // Update pagination state
+    hasNextPage = res.pagination?.hasNextPage || false;
+    
+    renderResults(res.results);
+    updatePaginationUI();
+  } catch(err){
     document.querySelector('#resultsBody').innerHTML =
-      `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
-    return;
+      '<tr><td colspan="5" class="muted">Network error.</td></tr>';
   }
-  renderResults(res.results);
-}catch(err){
-  document.querySelector('#resultsBody').innerHTML =
-    '<tr><td colspan="5" class="muted">Network error.</td></tr>';
 }
+
+function updatePaginationUI() {
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const pageInfo = document.getElementById('pageInfo');
+  
+  if (prevBtn && nextBtn && pageInfo) {
+    // Enable/disable buttons based on current page
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = !hasNextPage;
+    
+    // Update page info text
+    pageInfo.textContent = `Page ${currentPage}`;
+  }
 }
+
+function nextPage() {
+  if (hasNextPage) {
+    searchContacts(null, currentPage + 1);
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    searchContacts(null, currentPage - 1);
+  }
+}
+
+// Initialize event listeners when DOM is loaded
+window.addEventListener('DOMContentLoaded', () => {
+  if (!enforceAuth()) return;
+
+  const u = getUser();
+  const who = document.querySelector('#who');
+  if (who) who.textContent = `Signed in as ${u.firstName} ${u.lastName}`;
+
+  const lb = document.getElementById('logoutBtn');
+  if (lb) lb.addEventListener('click', (e) => {
+    e.preventDefault();
+    logout();
+  });
+
+  // Add event listeners to pagination buttons
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  
+  if (prevBtn) {
+    prevBtn.addEventListener('click', prevPage);
+  }
+  
+  if (nextBtn) {
+    nextBtn.addEventListener('click', nextPage);
+  }
+
+  searchContacts(null, 1); // Start at page 1
+});
 
 function editContact(data){
   document.querySelector('#contactId').value = data.id || '';
