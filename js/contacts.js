@@ -219,21 +219,21 @@ async function searchContacts(e, pageOverride){
     const rows = res.results || [];
     renderResults(rows);
 
-    // Update pager state
     const hasPrev = currentPage > 1;
     let hasNext, label;
 
-    if (typeof res.totalCount === 'number') {
-      const totalPages = Math.max(1, Math.ceil(res.totalCount / pageLimit));
+    if (res.pagination && typeof res.pagination.totalCount === 'number') {
+      const totalPages = Math.max(1, Math.ceil(res.pagination.totalCount / pageLimit));
       hasNext = currentPage < totalPages;
-      label   = `${currentPage} / ${totalPages}`;
+      label   = `Page ${currentPage} / ${totalPages}`;
     } else {
-      // Infer "next" when we received a full page
-      hasNext = rows.length === pageLimit;
-      label   = rows.length ? `Page ${currentPage}` : '';
+    // Fallback if totalCount missing
+    hasNext = rows.length === pageLimit;
+    label   = rows.length ? `Page ${currentPage}` : '';
     }
 
-    updatePager(hasPrev, hasNext, label);
+updatePager(hasPrev, hasNext, label);
+
 
   }catch(err){
     document.querySelector('#resultsBody').innerHTML =
