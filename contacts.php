@@ -117,7 +117,7 @@ $user = $_SESSION['user'];
     <section class="mb-4">
       <div class="card">
         <div class="card-body">
-          <h2 class="h5">Add / Edit Contact</h2>
+          <h2 class="h5">Add / Edit Contact Version 10:05</h2>
           <form onsubmit="saveContact(event)" class="row g-3 mt-1">
             <input type="hidden" id="contactId">
             <div class="col-md-6">

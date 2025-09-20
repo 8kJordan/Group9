@@ -152,4 +152,4 @@ try {
 
 
 $stmt->close();
-$db->close
+$db->close();
