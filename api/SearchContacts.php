@@ -95,7 +95,7 @@ if ($search === "") {
                 Email     AS email
          FROM Contacts
          WHERE UserId = ?
-         ORDER BY FistName, LastName
+         ORDER BY LastName, FirstName
          LIMIT ? OFFSET ?"
     );
     $stmt->bind_param("iii", $userId, $actualLimit, $offset);
@@ -110,7 +110,7 @@ if ($search === "") {
          FROM Contacts
          WHERE UserId = ?
            AND (FirstName LIKE ? OR LastName LIKE ? OR Phone LIKE ? OR Email LIKE ?)
-         ORDER BY FirstName, LastName
+         ORDER BY LastName, FirstName
          LIMIT ? OFFSET ?"
     );
     $stmt->bind_param("isssiii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
