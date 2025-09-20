@@ -28,7 +28,7 @@ $user = $_SESSION['user'];
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Theme overrides -->
-  <link rel="stylesheet" href="css/theme.css?v=1">
+  <link rel="stylesheet" href="css/theme.css?v=2">
 
 <script>
   (function(){
@@ -104,7 +104,7 @@ $user = $_SESSION['user'];
       <div class="d-flex align-items-center gap-3">
         <span id="who" class="text-white"></span>
         <a id="logoutBtn" href="/" role="button"
-           class="btn btn-outline-danger btn-sm">
+           class="btn btn-danger btn-sm">
           <i class="bi bi-box-arrow-right"></i> Log out
         </a>
       </div>

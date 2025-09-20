@@ -11,7 +11,11 @@ body {
 }
 
 /* Layout */
-main.container { max-width: 680px; margin: 1.25rem auto 2rem; }
+/* Wider content area so the table fits */
+main.container { max-width: 960px; }          /* was 680px */
+@media (min-width: 1200px) {
+  main.container { max-width: 1080px; }
+}
 h1 { font-size: 1.75rem; margin: .25rem 0 1rem; }
 h2 { font-size: 1.25rem; margin: 1rem 0 .5rem; }
 section + section { margin-top: 1rem; }
@@ -110,7 +114,11 @@ section + section { margin-top: 1rem; }
   border-color: #333633;
 }
 
-.table td, .table th { vertical-align: middle; }
+.table { table-layout: auto; }                 /* allow columns to grow naturally */
+.table td:last-child, .table th:last-child {
+  white-space: nowrap;                         /* no wrapping in Actions column */
+  width: 220px;                                /* enough for Edit/Delete */
+}
 
 footer {
   color: #6c757d;
