@@ -116,32 +116,6 @@ if ($search === "") {
     $stmt->bind_param("issssii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
 }
 
-// added module to count pages and display page count
-$totalCount = 0;
-if ($search === "") {
-    $stmtCount = $db->prepare(
-        "SELECT COUNT(*) AS cnt
-         FROM Contacts
-         WHERE UserId = ?"
-    );
-    $stmtCount->bind_param("i", $userId);
-} else {
-    $likeCount = "%".$search."%";
-    $stmtCount = $db->prepare(
-        "SELECT COUNT(*) AS cnt
-         FROM Contacts
-         WHERE UserId = ?
-           AND (FirstName LIKE ? OR LastName LIKE ? OR Phone LIKE ? OR Email LIKE ?)"
-    );
-    $stmtCount->bind_param("issss", $userId, $likeCount, $likeCount, $likeCount, $likeCount);
-}
-$stmtCount->execute();
-$resCount = $stmtCount->get_result();
-if ($rowCnt = $resCount->fetch_assoc()) {
-    $totalCount = (int)$rowCnt['cnt'];
-}
-$stmtCount->close();
-
 try {
     $stmt->execute();
     $res = $stmt->get_result();
@@ -163,7 +137,6 @@ try {
         "pagination" => [
             "currentPage" => $page,
             "hasNextPage" => $hasNextPage
-            "totalCount"  => $totalCount    //added page count
         ]
     ]);
 } catch (mysqli_sql_exception $e) {
@@ -179,4 +152,4 @@ try {
 
 
 $stmt->close();
-$db->close();
+$db->close
