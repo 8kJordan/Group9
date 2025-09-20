@@ -67,7 +67,7 @@ $user = $_SESSION['user'];
 </script>
 
   <!-- JS Script -->
-<script defer src="/js/contacts.js?v=12"></script>
+<script defer src="/js/contacts.js?v=13"></script>
 
 </head>
 
@@ -168,23 +168,21 @@ $user = $_SESSION['user'];
     </button>
   </div>
 </form>
-
-      <!-- Table -->
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>First</th>
-              <th>Last</th>
-              <th>Phone</th>
-              <th>Email</th>
-              <th style="width:200px">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="resultsBody">
-            <tr><td colspan="5" class="text-secondary">(no results)</td></tr>
-          </tbody>
-        </table>
+  <table class="table table-hover align-middle w-100">
+    <thead class="table-light">
+      <tr>
+        <th style="width:15%">First</th>
+        <th style="width:15%">Last</th>
+        <th style="width:20%">Phone</th>
+        <th style="width:25%">Email</th>
+        <th style="width:220px">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="resultsBody">
+      <tr><td colspan="5" class="text-secondary">(no results)</td></tr>
+    </tbody>
+  </table>
         <!-- Pagination -->
         <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
           <button id="prevBtn" type="button" class="btn btn-outline-secondary">Prev</button>

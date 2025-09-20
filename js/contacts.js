@@ -137,38 +137,50 @@ function renderResults(rows){
     return;
   }
   rows.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.dataset.id = r.id;
+  const tr = document.createElement('tr');
+  tr.dataset.id = r.id;
 
-    const tdFirst = document.createElement('td'); tdFirst.textContent = r.firstName || ''; tr.appendChild(tdFirst);
-    const tdLast  = document.createElement('td'); tdLast.textContent  = r.lastName || '';  tr.appendChild(tdLast);
-    const tdPhone = document.createElement('td'); tdPhone.textContent = r.phone || '';    tr.appendChild(tdPhone);
-    const tdEmail = document.createElement('td'); tdEmail.textContent = r.email || '';    tr.appendChild(tdEmail);
+  const tdFirst = document.createElement('td'); 
+  tdFirst.textContent = r.firstName || ''; 
+  tr.appendChild(tdFirst);
 
-    const tdAct = document.createElement('td');
+  const tdLast  = document.createElement('td'); 
+  tdLast.textContent  = r.lastName || '';  
+  tr.appendChild(tdLast);
 
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-sm btn-outlne-primary me-2';  
-    editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit'; 
-    editBtn.addEventListener('click', () => {
-      editContact(r);
-    });
+  const tdPhone = document.createElement('td'); 
+  tdPhone.textContent = r.phone || '';    
+  tr.appendChild(tdPhone);
 
-    const delBtn = document.createElement('button');
-    delBtn.className = 'btn btn-outline-danger btn-sm';          
-    delBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete';
-    delBtn.addEventListener('click', () => {
-      deleteContact(r.id);
-    });
+  const tdEmail = document.createElement('td'); 
+  tdEmail.textContent = r.email || '';    
+  tr.appendChild(tdEmail);
 
-    tdAct.appendChild(editBtn);
-    tdAct.appendChild(delBtn);
-    tr.appendChild(tdAct);
+  // Actions cell
+  const tdAct = document.createElement('td');
+  tdAct.className = 'd-flex gap-2';  // flexbox with spacing between buttons
 
-    tbody.appendChild(tr);
+  const editBtn = document.createElement('button');
+  editBtn.className = 'btn btn-sm btn-outline-primary';
+  editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit'; 
+  editBtn.addEventListener('click', () => {
+    editContact(r);
   });
-}
 
+  const delBtn = document.createElement('button');
+  delBtn.className = 'btn btn-sm btn-outline-danger';          
+  delBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete';
+  delBtn.addEventListener('click', () => {
+    deleteContact(r.id);
+  });
+
+  tdAct.appendChild(editBtn);
+  tdAct.appendChild(delBtn);
+  tr.appendChild(tdAct);
+
+  tbody.appendChild(tr);
+});
+}
 
 async function searchContacts(e, page = 1){
   if (e) e.preventDefault();
