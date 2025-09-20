@@ -62,7 +62,6 @@ async function doLogin(e) {
   }
 }
 
-
 // Register
 async function doRegister(e) {
   e.preventDefault();

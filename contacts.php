@@ -60,14 +60,6 @@ $user = $_SESSION['user'];
     })();
   </script>
 
-  <!-- LOCAL TESTING SCRIPT. REMOVE. -->
-  <script>
-  if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') &&
-      !localStorage.getItem('cmUser')) {
-    localStorage.setItem('cmUser', JSON.stringify({id: 1, firstName:'Dev', lastName:'User', username:'dev'}));
-  }
-</script>
-
 <script>
   if (location.hostname === 'www.group9-contacts.com') {
     location.replace('https://group9-contacts.com' + location.pathname + location.search + location.hash);
@@ -75,7 +67,6 @@ $user = $_SESSION['user'];
 </script>
 
 <script defer src="/js/contacts.js?v=7"></script>
-
 
   <!-- JS Script -->
 
@@ -108,7 +99,7 @@ $user = $_SESSION['user'];
 <body>
   <nav class="navbar bg-body-tertiary">
     <div class="container d-flex justify-content-between align-items-center">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+      <a class="navbar-brand d-flex align-items-center gap-2" >
         <i class="bi bi-journal-bookmark"></i> Contact Manager
       </a>
       <div class="d-flex align-items-center gap-3">
@@ -195,8 +186,13 @@ $user = $_SESSION['user'];
             <tr><td colspan="5" class="text-secondary">(no results)</td></tr>
           </tbody>
         </table>
+        <!-- Add pagination here -->
+<div id="pager" class="d-flex align-items-center justify-content-end gap-2 mt-2">
+  <button id="btnPrev" class="btn btn-sm btn-outline-secondary">Prev</button>
+  <span id="pageInfo" class="text-muted"></span>
+  <button id="btnNext" class="btn btn-sm btn-outline-secondary">Next</button>
+</div>
       </div>
-
     </div>
   </div>
 </section>
