@@ -51,14 +51,17 @@ if (strlen($search) > 100) {
     exit();
 }
 // pagination params
-$page  = isset($payload["page"])  ? (int)$payload["page"]  : 1;
-$limit = isset($payload["limit"]) ? (int)$payload["limit"] : 5;
+$page = (int)$payload["page"];
+$limit = (int)$payload["limit"]; 
 
-// definitely don't allow division by zero or invalids
-if ($page < 1)  { $page = 1; }
-// keep limit reasonable (backstop to avoid giant pulls)
-if ($limit < 1) { $limit = 5; }
-if ($limit > 100) { $limit = 100; }
+// definitely don't allow division by zero
+if ($page == 0) {
+    $page = 1;
+}
+
+if ($limit == 0) {
+    $limit = 20;
+}
 
 // calc pagination
 $offset = ($page - 1) * $limit;  
@@ -92,7 +95,7 @@ if ($search === "") {
                 Email     AS email
          FROM Contacts
          WHERE UserId = ?
-         ORDER BY LastName, FirstName, ID
+         ORDER BY LastName, FirstName
          LIMIT ? OFFSET ?"
     );
     $stmt->bind_param("iii", $userId, $actualLimit, $offset);
@@ -107,37 +110,11 @@ if ($search === "") {
          FROM Contacts
          WHERE UserId = ?
            AND (FirstName LIKE ? OR LastName LIKE ? OR Phone LIKE ? OR Email LIKE ?)
-         ORDER BY LastName, FirstName, ID
+         ORDER BY LastName, FirstName
          LIMIT ? OFFSET ?"
     );
-    $stmt->bind_param("issssii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
+    $stmt->bind_param("isssiii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
 }
-
-//module for page counter
-$totalCount = 0;
-if ($search === "") {
-    $stmtCount = $db->prepare(
-        "SELECT COUNT(*) AS cnt
-         FROM Contacts
-         WHERE UserId = ?"
-    );
-    $stmtCount->bind_param("i", $userId);
-} else {
-    $likeCount = "%".$search."%";
-    $stmtCount = $db->prepare(
-        "SELECT COUNT(*) AS cnt
-         FROM Contacts
-         WHERE UserId = ?
-           AND (FirstName LIKE ? OR LastName LIKE ? OR Phone LIKE ? OR Email LIKE ?)"
-    );
-    $stmtCount->bind_param("issss", $userId, $likeCount, $likeCount, $likeCount, $likeCount);
-}
-$stmtCount->execute();
-$resCount = $stmtCount->get_result();
-if ($rowCnt = $resCount->fetch_assoc()) {
-    $totalCount = (int)$rowCnt['cnt'];
-}
-$stmtCount->close();
 
 try {
     $stmt->execute();
@@ -154,19 +131,14 @@ try {
         array_pop($rows);
     }
 
-    $totalPages = max(1, (int)ceil($totalCount / max(1, $limit)));
-
-echo json_encode([
-    "status"  => "success",
-    "results" => $rows,
-    "pagination" => [
-        "currentPage" => $page,
-        "hasNextPage" => $hasNextPage,
-        "totalCount"  => $totalCount,
-        "totalPages"  => $totalPages
-    ]
-]);
-
+    echo json_encode([
+        "status"  => "success",
+        "results" => $rows,
+        "pagination" => [
+            "currentPage" => $page,
+            "hasNextPage" => $hasNextPage
+        ]
+    ]);
 } catch (mysqli_sql_exception $e) {
     // uh oh something went wrong
     http_response_code(500);

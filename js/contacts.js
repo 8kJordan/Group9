@@ -1,3 +1,5 @@
+
+
 async function api(path, body){
   const r = await fetch(`/api/${path}`, {
     method: 'POST',
@@ -11,11 +13,6 @@ async function api(path, body){
 }
 
 let user = null;
-
-// Pagination
-let currentPage = 1;
-let pageLimit   = 5; 
-let pagerBound = false; // prevent duplicate click bindings
 
 function getUser(){
   try {
@@ -66,11 +63,6 @@ window.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     logout();
   });
-
-  const btnPrev  = document.getElementById('btnPrev');
-  const btnNext  = document.getElementById('btnNext');
-  if (btnPrev) btnPrev.addEventListener('click', () => searchContacts(null, currentPage - 1));
-  if (btnNext) btnNext.addEventListener('click', () => searchContacts(null, currentPage + 1));
 
   searchContacts();
 });
@@ -170,98 +162,24 @@ function renderResults(rows){
   });
 }
 
-function updatePager(hasPrev, hasNext, labelText){
-  const pager    = document.getElementById('pager');
-  const btnPrev  = document.getElementById('btnPrev');
-  const btnNext  = document.getElementById('btnNext');
-  const pageInfo = document.getElementById('pageInfo');
-
-  // Hide the whole pager if there's no label to show
-  if (pager) pager.style.display = labelText === '' ? 'none' : '';
-
-  // Bind click handlers ONCE to avoid stacking multiple listeners
-  if (!pagerBound) {
-    if (btnPrev) btnPrev.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (btnPrev.disabled) return;
-      searchContacts(null, currentPage - 1);
-    });
-    if (btnNext) btnNext.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (btnNext.disabled) return;
-      searchContacts(null, currentPage + 1);
-    });
-    pagerBound = true;
-  }
-
-  // Toggle disabled states (and an optional CSS class if you style it)
-  if (btnPrev) {
-    btnPrev.disabled = !hasPrev;
-    btnPrev.classList.toggle('is-off', !hasPrev);
-  }
-  if (btnNext) {
-    btnNext.disabled = !hasNext;
-    btnNext.classList.toggle('is-off', !hasNext);
-  }
-
-  if (pageInfo) pageInfo.textContent = labelText || '';
-}
-
-
-
-async function searchContacts(e, pageOverride){
+async function searchContacts(e){
   if(e) e.preventDefault();
   const u = requireUser(); if(!u) return;
 
-  // If caller passed an explicit page, honor it; otherwise keep current
-  if (typeof pageOverride === 'number') {
-    currentPage = Math.max(1, pageOverride);
-  }
-
   const term = document.querySelector('#search').value.trim();
   try{
-    const res = await api('SearchContacts.php', {
-      userId: u.id,
-      search: term,
-      page:  currentPage,
-      limit: pageLimit
-    });
-
-    if (res.status !== 'success') {
-      renderResults([]);
-      document.querySelector('#resultsBody').innerHTML =
-        `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
-      updatePager(false, false, ''); // disable/hide pager on error
-      return;
-    }
-
-    const rows = res.results || [];
-    renderResults(rows);
-
-    const hasPrev = currentPage > 1;
-    let hasNext, label;
-
-    if (res.pagination && typeof res.pagination.totalPages === 'number') {
-      const totalPages = Math.max(1, res.pagination.totalPages);
-      hasNext = currentPage < totalPages;
-      label   = `Page ${currentPage} / ${totalPages}`;
-    } else if (res.pagination && typeof res.pagination.totalCount === 'number') {
-      const totalPages = Math.max(1, Math.ceil(res.pagination.totalCount / pageLimit));
-      hasNext = currentPage < totalPages;
-      label   = `Page ${currentPage} / ${totalPages}`;
-    } else {
-      // Fallback if server didn't send totals
-      hasNext = rows.length === pageLimit;
-      label   = rows.length ? `Page ${currentPage}` : '';
-    }
-
-updatePager(hasPrev, hasNext, label);
-
-  }catch(err){
+  const res = await api('SearchContacts.php', { userId: u.id, search: term });
+  if (res.status !== 'success') {
+    renderResults([]);
     document.querySelector('#resultsBody').innerHTML =
-      '<tr><td colspan="5" class="muted">Network error.</td></tr>';
-    updatePager(false, false, ''); // disable/hide pager on error
+      `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
+    return;
   }
+  renderResults(res.results);
+}catch(err){
+  document.querySelector('#resultsBody').innerHTML =
+    '<tr><td colspan="5" class="muted">Network error.</td></tr>';
+}
 }
 
 function editContact(data){
@@ -284,10 +202,10 @@ async function deleteContact(id){
     alert('Network error.');
   }
 }
-
 //ensure globals
 window.saveContact    = saveContact;
 window.searchContacts = searchContacts;
 window.deleteContact  = deleteContact;
 window.resetForm      = resetForm;
 window.logout         = logout;
+

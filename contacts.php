@@ -60,6 +60,14 @@ $user = $_SESSION['user'];
     })();
   </script>
 
+  <!-- LOCAL TESTING SCRIPT. REMOVE. -->
+  <script>
+  if ((location.hostname === '127.0.0.1' || location.hostname === 'localhost') &&
+      !localStorage.getItem('cmUser')) {
+    localStorage.setItem('cmUser', JSON.stringify({id: 1, firstName:'Dev', lastName:'User', username:'dev'}));
+  }
+</script>
+
 <script>
   if (location.hostname === 'www.group9-contacts.com') {
     location.replace('https://group9-contacts.com' + location.pathname + location.search + location.hash);
@@ -67,6 +75,7 @@ $user = $_SESSION['user'];
 </script>
 
 <script defer src="/js/contacts.js?v=7"></script>
+
 
   <!-- JS Script -->
 
@@ -117,7 +126,7 @@ $user = $_SESSION['user'];
     <section class="mb-4">
       <div class="card">
         <div class="card-body">
-          <h2 class="h5">Add / Edit Contact Version 10:53</h2>
+          <h2 class="h5">Add / Edit Contact</h2>
           <form onsubmit="saveContact(event)" class="row g-3 mt-1">
             <input type="hidden" id="contactId">
             <div class="col-md-6">
@@ -186,12 +195,11 @@ $user = $_SESSION['user'];
             <tr><td colspan="5" class="text-secondary">(no results)</td></tr>
           </tbody>
         </table>
-<!-- Pagination row -->
+        <!-- Pagination row -->
 <div class="d-flex align-items-center gap-2 mt-3">
   <button id="prevBtn" type="button" class="btn btn-outline-secondary">Prev</button>
   <button id="nextBtn" type="button" class="btn btn-outline-secondary">Next</button>
   <span id="pageInfo" class="ms-2 text-muted"></span>
-</div>
 </div>
       </div>
     </div>
@@ -270,4 +278,3 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 </body>
 </html>
-
