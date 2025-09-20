@@ -67,7 +67,7 @@ $user = $_SESSION['user'];
 </script>
 
   <!-- JS Script -->
-<script defer src="/js/contacts.js?v=8"></script>
+<script defer src="/js/contacts.js"></script>
 
 </head>
 
@@ -185,11 +185,11 @@ $user = $_SESSION['user'];
             <tr><td colspan="5" class="text-secondary">(no results)</td></tr>
           </tbody>
         </table>
-        <!-- Pagination row -->
-        <div class="d-flex align-items-center justify-content-end gap-2 mt-2">
+        <!-- Pagination -->
+        <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
           <button id="prevBtn" type="button" class="btn btn-outline-secondary">Prev</button>
+          <span id="pageInfo" class="mx-2 text-muted"></span>
           <button id="nextBtn" type="button" class="btn btn-outline-secondary">Next</button>
-          <span id="pageInfo" class="ms-2 text-muted"></span>
         </div>
       </div>
     </div>
