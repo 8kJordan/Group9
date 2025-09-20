@@ -155,44 +155,49 @@ $user = $_SESSION['user'];
     <div class="card-body">
 
       <!-- Header row -->
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <h2 class="h5 m-0">Search</h2>
-</div>
-
-<!-- Search bar -->
-<form onsubmit="searchContacts(event)" class="mb-3">
-  <div class="input-group">
-    <input id="search" class="form-control" placeholder="name, phone, or email">
-    <button class="btn btn-outline-darkblue btn-sm" type="submit">
-      <i class="bi bi-search"></i> Search
-    </button>
-  </div>
-</form>
-      <div class="table-responsive">
-  <table class="table table-hover align-middle w-100">
-    <thead class="table-light">
-      <tr>
-        <th style="width:15%">First</th>
-        <th style="width:15%">Last</th>
-        <th style="width:20%">Phone</th>
-        <th style="width:25%">Email</th>
-        <th style="width:220px">Actions</th>
-      </tr>
-    </thead>
-    <tbody id="resultsBody">
-      <tr><td colspan="5" class="text-secondary">(no results)</td></tr>
-    </tbody>
-  </table>
-        <!-- Pagination -->
-        <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
-          <button id="prevBtn" type="button" class="btn btn-outline-secondary btn-sm">Prev</button>
-          <span id="pageInfo" class="mx-2 text-muted"></span>
-          <button id="nextBtn" type="button" class="btn btn-outline-secondary btn-sm">Next</button>
-        </div>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h5 m-0">Search</h2>
       </div>
+
+      <!-- Search bar -->
+      <form onsubmit="searchContacts(event)" class="mb-3">
+        <div class="input-group">
+          <input id="search" class="form-control" placeholder="name, phone, or email">
+          <button class="btn btn-outline-darkblue btn-sm" type="submit">
+            <i class="bi bi-search"></i> Search
+          </button>
+        </div>
+      </form>
+
+      <!-- Results table -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle w-100">
+          <thead class="table-light">
+            <tr>
+              <th style="width:15%">First</th>
+              <th style="width:15%">Last</th>
+              <th style="width:20%">Phone</th>
+              <th style="width:25%">Email</th>
+              <th style="width:220px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr><td colspan="5" class="text-secondary">(no results)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
+        <button id="prevBtn" type="button" class="btn btn-outline-secondary btn-sm">Prev</button>
+        <span id="pageInfo" class="mx-2 text-muted"></span>
+        <button id="nextBtn" type="button" class="btn btn-outline-secondary btn-sm">Next</button>
+      </div>
+
     </div>
   </div>
 </section>
+
   </main>
 
   <footer class="container">
