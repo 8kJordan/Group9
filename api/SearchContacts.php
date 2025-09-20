@@ -113,8 +113,34 @@ if ($search === "") {
          ORDER BY LastName, FirstName
          LIMIT ? OFFSET ?"
     );
-    $stmt->bind_param("isssiii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
+    $stmt->bind_param("issssii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
 }
+
+//add module to calculate total oages
+$totalCount = 0;
+if ($search === "") {
+    $stmtCount = $db->prepare(
+        "SELECT COUNT(*) AS cnt
+         FROM Contacts
+         WHERE UserId = ?"
+    );
+    $stmtCount->bind_param("i", $userId);
+} else {
+    $likeCount = "%".$search."%";
+    $stmtCount = $db->prepare(
+        "SELECT COUNT(*) AS cnt
+         FROM Contacts
+         WHERE UserId = ?
+           AND (FirstName LIKE ? OR LastName LIKE ? OR Phone LIKE ? OR Email LIKE ?)"
+    );
+    $stmtCount->bind_param("issss", $userId, $likeCount, $likeCount, $likeCount, $likeCount);
+}
+$stmtCount->execute();
+$resCount = $stmtCount->get_result();
+if ($rowCnt = $resCount->fetch_assoc()) {
+    $totalCount = (int)$rowCnt['cnt'];
+}
+$stmtCount->close();
 
 try {
     $stmt->execute();
@@ -131,14 +157,19 @@ try {
         array_pop($rows);
     }
 
-    echo json_encode([
-        "status"  => "success",
-        "results" => $rows,
-        "pagination" => [
-            "currentPage" => $page,
-            "hasNextPage" => $hasNextPage
-        ]
-    ]);
+    $totalPages = max(1, (int)ceil($totalCount / max(1, $limit)));
+
+echo json_encode([
+  "status"  => "success",
+  "results" => $rows,
+  "pagination" => [
+      "currentPage" => $page,
+      "hasNextPage" => $hasNextPage,
+      "totalCount"  => $totalCount,
+      "totalPages"  => $totalPages
+  ]
+]);
+
 } catch (mysqli_sql_exception $e) {
     // uh oh something went wrong
     http_response_code(500);

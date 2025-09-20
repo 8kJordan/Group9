@@ -146,16 +146,21 @@ function renderResults(rows){
     const tdEmail = document.createElement('td'); tdEmail.textContent = r.email || '';    tr.appendChild(tdEmail);
 
     const tdAct = document.createElement('td');
+
     const editBtn = document.createElement('button');
-    editBtn.className = 'btn'; editBtn.textContent = 'Edit';
+    editBtn.className = 'btn btn-sm btn-primary me-2';   // blue, small, with right margin
+    editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit'; 
     editBtn.addEventListener('click', () => {
       editContact(r);
     });
+
     const delBtn = document.createElement('button');
-    delBtn.className = 'btn'; delBtn.textContent = 'Delete';
+    delBtn.className = 'btn btn-sm btn-danger';          // red, small
+    delBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete';
     delBtn.addEventListener('click', () => {
       deleteContact(r.id);
     });
+
     tdAct.appendChild(editBtn);
     tdAct.appendChild(delBtn);
     tr.appendChild(tdAct);
@@ -164,47 +169,75 @@ function renderResults(rows){
   });
 }
 
+
 async function searchContacts(e, page = 1){
-  if(e) e.preventDefault();
-  const u = requireUser(); if(!u) return;
+  if (e) e.preventDefault();
+  const u = requireUser(); if (!u) return;
 
   const term = document.querySelector('#search').value.trim();
   currentSearchTerm = term;
-  currentPage = page;
-  
-  console.log("Searching contacts, page:", currentPage); // Debug log
-  
+
+  // clamp page to 1+
+  if (typeof page === 'number' && !Number.isNaN(page)) {
+    currentPage = Math.max(1, page);
+  }
+
+  console.log("Searching contacts, page:", currentPage); // Debug
+
   try{
     const res = await api('SearchContacts.php', { 
       userId: u.id, 
       search: term,
-      page: currentPage,
+      page:  currentPage,
       limit: 5
     });
-    
-    console.log("API response:", res); // Debug log
-    
+
+    console.log("API response:", res); // Debug
+
     if (res.status !== 'success') {
       renderResults([]);
       document.querySelector('#resultsBody').innerHTML =
         `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
+      hasNextPage = false;
+      updatePaginationUI(1); // fallback label: Page (current/1)
       return;
     }
-    
-    // Update pagination state
-    hasNextPage = res.pagination?.hasNextPage || false;
-    console.log("Has next page:", hasNextPage); // Debug log
-    
-    renderResults(res.results);
-    updatePaginationUI();
+
+    const rows = Array.isArray(res.results) ? res.results : [];
+    renderResults(rows);
+
+    let totalPages = 1;
+    if (res.pagination && typeof res.pagination.totalPages === 'number') {
+      totalPages = Math.max(1, res.pagination.totalPages);
+    } else if (res.pagination && typeof res.pagination.totalCount === 'number') {
+      totalPages = Math.max(1, Math.ceil(res.pagination.totalCount / 5));
+    } else {
+      // Fallback: infer whether another page likely exists
+      totalPages = rows.length === 5 ? currentPage + 1 : currentPage;
+    }
+
+    // set hasNextPage from totals (preferred) or server flag
+    if (res.pagination && typeof res.pagination.hasNextPage === 'boolean') {
+      hasNextPage = res.pagination.hasNextPage;
+    } else {
+      hasNextPage = currentPage < totalPages;
+    }
+
+    console.log("Has next page:", hasNextPage, "Total pages:", totalPages); // Debug
+
+    // Show "Page (X/Y)"
+    updatePaginationUI(totalPages);
+
   } catch(err){
-    console.error("Search error:", err); // Debug log
+    console.error("Search error:", err); // Debug
     document.querySelector('#resultsBody').innerHTML =
       '<tr><td colspan="5" class="muted">Network error.</td></tr>';
+    hasNextPage = false;
+    updatePaginationUI(1);
   }
 }
 
-function updatePaginationUI() {
+function updatePaginationUI(totalPages) { 
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   const pageInfo = document.getElementById('pageInfo');
@@ -212,17 +245,23 @@ function updatePaginationUI() {
   console.log("UI elements:", {prevBtn, nextBtn, pageInfo}); // Debug log
   
   if (prevBtn && nextBtn && pageInfo) {
-    // Enable/disable buttons based on current page
+    // Enable/disable buttons
     prevBtn.disabled = currentPage <= 1;
     nextBtn.disabled = !hasNextPage;
-    
-    // Update page info text
-    pageInfo.textContent = `Page ${currentPage}`;
-    console.log("Updated page info to:", `Page ${currentPage}`); // Debug log
+
+    // Show "Page (X/Y)"
+    if (typeof totalPages === 'number' && totalPages > 0) {
+      pageInfo.textContent = `Page (${currentPage}/${totalPages})`;
+    } else {
+      pageInfo.textContent = `Page ${currentPage}`;
+    }
+
+    console.log("Updated page info to:", pageInfo.textContent); // Debug log
   } else {
     console.error("Could not find pagination elements"); // Debug log
   }
 }
+
 
 function nextPage() {
   console.log("Next button clicked, hasNextPage:", hasNextPage); // Debug log
