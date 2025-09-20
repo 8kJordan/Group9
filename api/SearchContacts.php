@@ -60,7 +60,7 @@ if ($page == 0) {
 }
 
 if ($limit == 0) {
-    $limit = 20;
+    $limit = 5;
 }
 
 // calc pagination
@@ -95,7 +95,7 @@ if ($search === "") {
                 Email     AS email
          FROM Contacts
          WHERE UserId = ?
-         ORDER BY LastName, FirstName
+         ORDER BY FistName, LastName
          LIMIT ? OFFSET ?"
     );
     $stmt->bind_param("iii", $userId, $actualLimit, $offset);
@@ -110,7 +110,7 @@ if ($search === "") {
          FROM Contacts
          WHERE UserId = ?
            AND (FirstName LIKE ? OR LastName LIKE ? OR Phone LIKE ? OR Email LIKE ?)
-         ORDER BY LastName, FirstName
+         ORDER BY FirstName, LastName
          LIMIT ? OFFSET ?"
     );
     $stmt->bind_param("isssiii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
@@ -149,7 +149,6 @@ try {
     ]);
     error_log("Search query error: " . $e->getMessage());
 }
-
 
 $stmt->close();
 $db->close();
