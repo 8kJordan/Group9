@@ -49,102 +49,6 @@ function enforceAuth(){
   return true;
 }
 
-/* ================== Pagination state ================== */
-const pager = {
-  page: 1,          // 1-based index
-  pageSize: 20,     // match api default
-  lastQuery: "",    // mirrors #search input
-  loading: false
-};
-
-// Build the request body; server expects offset/limit.
-function buildSearchPayload(extra = {}) {
-  const u = requireUser(); if (!u) return {};
-  const offset = (pager.page - 1) * pager.pageSize;
-  const limit  = pager.pageSize;
-
-  return {
-    userId: u.id,
-    search: pager.lastQuery,
-    offset, // typical PHP expects these
-    limit,
-    ...extra
-  };
-}
-
-// Buttons: keep Next enabled for now; Prev only when page > 1.
-function updatePagerButtons(hasPrev /* ignore hasNext for now */) {
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  if (prevBtn) prevBtn.disabled = !hasPrev;
-  if (nextBtn) nextBtn.disabled = false; // always allow Next for now
-}
-function setPagerButtonsDisabled(disabled) {
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  if (prevBtn) prevBtn.disabled = disabled || pager.page <= 1;
-  if (nextBtn) nextBtn.disabled = !!disabled; // re-enable on finish
-}
-
-/* --- Button handlers with logs (verify in DevTools Console) --- */
-function onPrevClick(e){
-  if (e) e.preventDefault();
-  console.log('[pager] Prev click, page=', pager.page, '->', Math.max(1, pager.page - 1));
-  if (pager.page > 1) {
-    pager.page -= 1;
-    loadContactsForCurrentPage();
-  }
-}
-function onNextClick(e){
-  if (e) e.preventDefault();
-  console.log('[pager] Next click, page=', pager.page, '->', pager.page + 1);
-  pager.page += 1;
-  loadContactsForCurrentPage();
-}
-
-/* Fetch & render current page */
-async function loadContactsForCurrentPage(extraBody = {}) {
-  if (pager.loading) return;
-  pager.loading = true;
-  setPagerButtonsDisabled(true);
-
-  // debug: confirm payload sent
-  const payload = buildSearchPayload(extraBody);
-  console.log('[pager] load page', pager.page, 'payload:', payload);
-
-  try {
-    const res = await api('SearchContacts.php', payload);
-
-    if (res.status !== 'success') {
-      renderResults([]);
-      document.querySelector('#resultsBody').innerHTML =
-        `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
-      updatePagerButtons(pager.page > 1);
-      return;
-    }
-
-    const rows = Array.isArray(res.results) ? res.results
-               : Array.isArray(res.contacts) ? res.contacts
-               : Array.isArray(res) ? res
-               : [];
-
-    console.log('[pager] results length=', rows.length);
-    renderResults(rows);
-
-    // Heuristic: keep Next enabled; Prev only if page > 1
-    updatePagerButtons(pager.page > 1);
-  } catch (err) {
-    console.error('Failed to load contacts:', err);
-    document.querySelector('#resultsBody').innerHTML =
-      '<tr><td colspan="5" class="muted">Network error.</td></tr>';
-    updatePagerButtons(pager.page > 1);
-  } finally {
-    pager.loading = false;
-    setPagerButtonsDisabled(false);
-  }
-}
-
-/* ================== Lifecycle ================== */
 window.addEventListener('DOMContentLoaded', () => {
   if (!enforceAuth()) return;
 
@@ -158,32 +62,17 @@ window.addEventListener('DOMContentLoaded', () => {
     logout();
   });
 
-  // Direct binding (if buttons exist at load time)
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  if (prevBtn) prevBtn.addEventListener('click', onPrevClick);
-  if (nextBtn) nextBtn.addEventListener('click', onNextClick);
-
-  // Fallback: event delegation (handles late/rehydrated DOM)
-  document.addEventListener('click', (e) => {
-    const t = e.target;
-    if (!t) return;
-    if (t.id === 'prevBtn') onPrevClick(e);
-    if (t.id === 'nextBtn') onNextClick(e);
-  });
-
-  // Initial search & load page 1 (resets pager via event call below if form submit)
-  searchContacts(); // keeps your existing entry point
+  searchContacts();
 });
 
 // Fires when page is restored from Back/Forward Cache
 window.addEventListener('pageshow', (e) => {
+  // On bfcache restore, re-enforce auth
   enforceAuth();
 });
 
 window.logout = logout; //make global
 
-/* ================== CRUD & UI ================== */
 function resetForm(){
   document.querySelector('#contactId').value = '';
   document.querySelector('#cFirst').value = '';
@@ -217,14 +106,13 @@ async function saveContact(e){
       res = await api('AddContact.php', { userId: u.id, firstName, lastName, phone, email });
     }
     if (res.status !== 'success') {
-      out.textContent = res.desc || 'Error';
-      return;
+    out.textContent = res.desc || 'Error';
+    return;
     }
     out.textContent = id ? 'Contact updated.' : `Added contact #${res.id ?? res.contactId ?? ''}.`;
 
     resetForm();
-    // Stay on the same page after add/update
-    await loadContactsForCurrentPage();
+    await searchContacts();
   }catch(err){
     out.textContent = 'Network error.';
   }
@@ -244,7 +132,6 @@ function renderResults(rows){
     tr.appendChild(td); tbody.appendChild(tr);
     return;
   }
-
   rows.forEach(r => {
     const tr = document.createElement('tr');
     tr.dataset.id = r.id;
@@ -277,12 +164,20 @@ async function searchContacts(e){
   if(e) e.preventDefault();
   const u = requireUser(); if(!u) return;
 
-  const term = document.querySelector('#search') ? document.querySelector('#search').value.trim() : '';
-  // When user triggers a fresh search (there is an event), go back to page 1
-  if (e) pager.page = 1;
-  pager.lastQuery = term;
-
-  await loadContactsForCurrentPage();
+  const term = document.querySelector('#search').value.trim();
+  try{
+  const res = await api('SearchContacts.php', { userId: u.id, search: term });
+  if (res.status !== 'success') {
+    renderResults([]);
+    document.querySelector('#resultsBody').innerHTML =
+      `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
+    return;
+  }
+  renderResults(res.results);
+}catch(err){
+  document.querySelector('#resultsBody').innerHTML =
+    '<tr><td colspan="5" class="muted">Network error.</td></tr>';
+}
 }
 
 function editContact(data){
@@ -298,14 +193,14 @@ async function deleteContact(id){
   const u = requireUser(); if(!u) return;
   if(!confirm('Delete this contact?')) return;
   try{
-    const res = await api('DeleteContact.php', { userId: u.id, contactId: id });
-    if (res.status !== 'success') { alert(res.desc || 'Delete failed.'); return; }
-    await loadContactsForCurrentPage();
+  const res = await api('DeleteContact.php', { userId: u.id, contactId: id });
+  if (res.status !== 'success') { alert(res.desc || 'Delete failed.'); return; }
+  await searchContacts();
   }catch(err){
     alert('Network error.');
   }
-}
 
+}
 //ensure globals
 window.saveContact    = saveContact;
 window.searchContacts = searchContacts;
