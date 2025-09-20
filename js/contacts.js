@@ -172,13 +172,17 @@ async function searchContacts(e, page = 1){
   currentSearchTerm = term;
   currentPage = page;
   
+  console.log("Searching contacts, page:", currentPage); // Debug log
+  
   try{
     const res = await api('SearchContacts.php', { 
       userId: u.id, 
       search: term,
       page: currentPage,
-      limit: 5 // Match the limit in your backend
+      limit: 5
     });
+    
+    console.log("API response:", res); // Debug log
     
     if (res.status !== 'success') {
       renderResults([]);
@@ -189,10 +193,12 @@ async function searchContacts(e, page = 1){
     
     // Update pagination state
     hasNextPage = res.pagination?.hasNextPage || false;
+    console.log("Has next page:", hasNextPage); // Debug log
     
     renderResults(res.results);
     updatePaginationUI();
   } catch(err){
+    console.error("Search error:", err); // Debug log
     document.querySelector('#resultsBody').innerHTML =
       '<tr><td colspan="5" class="muted">Network error.</td></tr>';
   }
@@ -203,6 +209,8 @@ function updatePaginationUI() {
   const nextBtn = document.getElementById('nextBtn');
   const pageInfo = document.getElementById('pageInfo');
   
+  console.log("UI elements:", {prevBtn, nextBtn, pageInfo}); // Debug log
+  
   if (prevBtn && nextBtn && pageInfo) {
     // Enable/disable buttons based on current page
     prevBtn.disabled = currentPage <= 1;
@@ -210,16 +218,21 @@ function updatePaginationUI() {
     
     // Update page info text
     pageInfo.textContent = `Page ${currentPage}`;
+    console.log("Updated page info to:", `Page ${currentPage}`); // Debug log
+  } else {
+    console.error("Could not find pagination elements"); // Debug log
   }
 }
 
 function nextPage() {
+  console.log("Next button clicked, hasNextPage:", hasNextPage); // Debug log
   if (hasNextPage) {
     searchContacts(null, currentPage + 1);
   }
 }
 
 function prevPage() {
+  console.log("Prev button clicked, currentPage:", currentPage); // Debug log
   if (currentPage > 1) {
     searchContacts(null, currentPage - 1);
   }
@@ -243,6 +256,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   
+  console.log("DOM loaded, buttons:", {prevBtn, nextBtn}); // Debug log
+  
   if (prevBtn) {
     prevBtn.addEventListener('click', prevPage);
   }
@@ -251,7 +266,7 @@ window.addEventListener('DOMContentLoaded', () => {
     nextBtn.addEventListener('click', nextPage);
   }
 
-  searchContacts(null, 1); // Start at page 1
+  searchContacts(null, 1);
 });
 
 function editContact(data){
