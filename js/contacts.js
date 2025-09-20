@@ -177,14 +177,14 @@ function updatePager(hasPrev, hasNext, labelText){
 
   if (pager)    pager.style.display = labelText === '' ? 'none' : '';
 
-  if (btnPrev) {
-    btnPrev.classList.toggle('is-off', !hasPrev);
-    btnPrev.setAttribute('aria-disabled', String(!hasPrev));
-  }
-  if (btnNext) {
-    btnNext.classList.toggle('is-off', !hasNext);
-    btnNext.setAttribute('aria-disabled', String(!hasNext));
-  }
+  if (btnPrev) btnPrev.addEventListener('click', () => {
+  if (btnPrev.classList.contains('is-off')) return;
+  searchContacts(null, currentPage - 1);
+});
+if (btnNext) btnNext.addEventListener('click', () => {
+  if (btnNext.classList.contains('is-off')) return;
+  searchContacts(null, currentPage + 1);
+});
 
   if (pageInfo) pageInfo.textContent = labelText || '';
 }
@@ -238,8 +238,6 @@ async function searchContacts(e, pageOverride){
 
 updatePager(hasPrev, hasNext, label);
 
-
-
   }catch(err){
     document.querySelector('#resultsBody').innerHTML =
       '<tr><td colspan="5" class="muted">Network error.</td></tr>';
@@ -266,6 +264,7 @@ async function deleteContact(id){
   }catch(err){
     alert('Network error.');
   }
+}
 
 //ensure globals
 window.saveContact    = saveContact;
@@ -273,5 +272,3 @@ window.searchContacts = searchContacts;
 window.deleteContact  = deleteContact;
 window.resetForm      = resetForm;
 window.logout         = logout;
-
-}
