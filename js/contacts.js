@@ -1,5 +1,3 @@
-
-
 async function api(path, body){
   const r = await fetch(`/api/${path}`, {
     method: 'POST',
@@ -51,6 +49,88 @@ function enforceAuth(){
   return true;
 }
 
+/* ========= Pagination: lightweight client state ========= */
+const pager = {
+  page: 1,          // 1-based index
+  pageSize: 10,     // adjust if your API expects a different size
+  lastQuery: "",    // mirrors #search input
+  loading: false
+};
+
+// Build the request body, keeping keys simple & stable.
+// If your PHP expects offset/limit, switch to those in this function only.
+function buildSearchPayload(extra = {}) {
+  const u = requireUser(); if (!u) return {};
+  return {
+    userId: u.id,
+    search: pager.lastQuery,
+    page: pager.page,
+    pageSize: pager.pageSize,
+    ...extra
+  };
+}
+
+// Enable/disable prev/next buttons
+function updatePagerButtons(hasPrev, hasNext) {
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  if (prevBtn) prevBtn.disabled = !hasPrev;
+  if (nextBtn) nextBtn.disabled = !hasNext;
+}
+function setPagerButtonsDisabled(disabled) {
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  if (prevBtn) prevBtn.disabled = disabled || pager.page <= 1;
+  if (nextBtn) nextBtn.disabled = disabled;
+}
+
+// Fetch and render contacts for current pager state
+async function loadContactsForCurrentPage(extraBody = {}) {
+  if (pager.loading) return;
+  pager.loading = true;
+  setPagerButtonsDisabled(true);
+
+  try {
+    const res = await api('SearchContacts.php', buildSearchPayload(extraBody));
+    if (res.status !== 'success') {
+      renderResults([]);
+      document.querySelector('#resultsBody').innerHTML =
+        `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
+      // allow retry: prev enabled if page>1; next enabled to try again
+      updatePagerButtons(pager.page > 1, true);
+      return;
+    }
+
+    const rows = Array.isArray(res.results) ? res.results
+               : Array.isArray(res.contacts) ? res.contacts
+               : Array.isArray(res) ? res
+               : [];
+
+    renderResults(rows);
+
+    // Basic hasNext heuristic without total count
+    let hasPrev = pager.page > 1;
+    let hasNext = rows.length === pager.pageSize;
+
+    // If your API returns total, uncomment for precise next/prev:
+    // const total = Number.isFinite(res.total) ? res.total : null;
+    // if (total != null) {
+    //   hasNext = (pager.page * pager.pageSize) < total;
+    // }
+
+    updatePagerButtons(hasPrev, hasNext);
+  } catch (err) {
+    console.error('Failed to load contacts:', err);
+    document.querySelector('#resultsBody').innerHTML =
+      '<tr><td colspan="5" class="muted">Network error.</td></tr>';
+    updatePagerButtons(pager.page > 1, true);
+  } finally {
+    pager.loading = false;
+    setPagerButtonsDisabled(false);
+  }
+}
+/* ========= End pagination additions ========= */
+
 window.addEventListener('DOMContentLoaded', () => {
   if (!enforceAuth()) return;
 
@@ -64,7 +144,27 @@ window.addEventListener('DOMContentLoaded', () => {
     logout();
   });
 
-  searchContacts();
+  // Wire Prev/Next buttons
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (pager.page > 1) {
+        pager.page -= 1;
+        loadContactsForCurrentPage();
+      }
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      pager.page += 1;
+      loadContactsForCurrentPage();
+    });
+  }
+
+  // Initial search & load page 1
+  searchContacts(); // keeps your existing entry point
 });
 
 // Fires when page is restored from Back/Forward Cache
@@ -108,13 +208,14 @@ async function saveContact(e){
       res = await api('AddContact.php', { userId: u.id, firstName, lastName, phone, email });
     }
     if (res.status !== 'success') {
-    out.textContent = res.desc || 'Error';
-    return;
+      out.textContent = res.desc || 'Error';
+      return;
     }
     out.textContent = id ? 'Contact updated.' : `Added contact #${res.id ?? res.contactId ?? ''}.`;
 
     resetForm();
-    await searchContacts();
+    // Stay on the same page after add/update
+    await loadContactsForCurrentPage();
   }catch(err){
     out.textContent = 'Network error.';
   }
@@ -162,24 +263,18 @@ function renderResults(rows){
   });
 }
 
+// NOTE: If called via a UI event (e.g., pressing Enter in #search or a form submit),
+// we reset to page 1. Programmatic calls (initial load, save/delete) keep current page.
 async function searchContacts(e){
   if(e) e.preventDefault();
   const u = requireUser(); if(!u) return;
 
-  const term = document.querySelector('#search').value.trim();
-  try{
-  const res = await api('SearchContacts.php', { userId: u.id, search: term });
-  if (res.status !== 'success') {
-    renderResults([]);
-    document.querySelector('#resultsBody').innerHTML =
-      `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
-    return;
-  }
-  renderResults(res.results);
-}catch(err){
-  document.querySelector('#resultsBody').innerHTML =
-    '<tr><td colspan="5" class="muted">Network error.</td></tr>';
-}
+  const term = document.querySelector('#search') ? document.querySelector('#search').value.trim() : '';
+  // When user triggers a fresh search (there is an event), go back to page 1
+  if (e) pager.page = 1;
+  pager.lastQuery = term;
+
+  await loadContactsForCurrentPage();
 }
 
 function editContact(data){
@@ -195,17 +290,28 @@ async function deleteContact(id){
   const u = requireUser(); if(!u) return;
   if(!confirm('Delete this contact?')) return;
   try{
-  const res = await api('DeleteContact.php', { userId: u.id, contactId: id });
-  if (res.status !== 'success') { alert(res.desc || 'Delete failed.'); return; }
-  await searchContacts();
+    const res = await api('DeleteContact.php', { userId: u.id, contactId: id });
+    if (res.status !== 'success') { alert(res.desc || 'Delete failed.'); return; }
+    // Stay on the same page after delete; if the page empties, step back a page
+    // (Optional nicety—commented out minimal version keeps current page)
+    // await loadContactsForCurrentPage().then(() => {
+    //   const rows = document.querySelectorAll('#resultsBody tr');
+    //   const onlyNoResults = rows.length === 1 && rows[0].querySelector('.muted');
+    //   if (onlyNoResults && pager.page > 1) {
+    //     pager.page -= 1;
+    //     return loadContactsForCurrentPage();
+    //   }
+    // });
+
+    await loadContactsForCurrentPage();
   }catch(err){
     alert('Network error.');
   }
 }
+
 //ensure globals
 window.saveContact    = saveContact;
 window.searchContacts = searchContacts;
 window.deleteContact  = deleteContact;
 window.resetForm      = resetForm;
 window.logout         = logout;
-
