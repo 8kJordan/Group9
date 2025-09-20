@@ -113,7 +113,7 @@ if ($search === "") {
          ORDER BY LastName, FirstName
          LIMIT ? OFFSET ?"
     );
-    $stmt->bind_param("isssiii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
+    $stmt->bind_param("issssiii", $userId, $like, $like, $like, $like, $actualLimit, $offset);
 }
 
 try {
