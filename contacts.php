@@ -117,7 +117,7 @@ $user = $_SESSION['user'];
     <section class="mb-4">
       <div class="card">
         <div class="card-body">
-          <h2 class="h5">Add / Edit Contact Version 10:37</h2>
+          <h2 class="h5">Add / Edit Contact Version 10:53</h2>
           <form onsubmit="saveContact(event)" class="row g-3 mt-1">
             <input type="hidden" id="contactId">
             <div class="col-md-6">
@@ -186,11 +186,11 @@ $user = $_SESSION['user'];
             <tr><td colspan="5" class="text-secondary">(no results)</td></tr>
           </tbody>
         </table>
-<!-- Pagination -->
-<div id="pager" class="d-flex align-items-center justify-content-end gap-2 mt-2">
-  <button id="btnPrev" type="button" class="btn btn-sm btn-outline-secondary">Prev</button>
-  <span id="pageInfo" class="text-muted"></span>
-  <button id="btnNext" type="button" class="btn btn-sm btn-outline-secondary">Next</button>
+<!-- Pagination row -->
+<div class="d-flex align-items-center gap-2 mt-3">
+  <button id="prevBtn" type="button" class="btn btn-outline-secondary">Prev</button>
+  <button id="nextBtn" type="button" class="btn btn-outline-secondary">Next</button>
+  <span id="pageInfo" class="ms-2 text-muted"></span>
 </div>
 </div>
       </div>

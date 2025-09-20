@@ -51,17 +51,14 @@ if (strlen($search) > 100) {
     exit();
 }
 // pagination params
-$page = (int)$payload["page"];
-$limit = (int)$payload["limit"]; 
+$page  = isset($payload["page"])  ? (int)$payload["page"]  : 1;
+$limit = isset($payload["limit"]) ? (int)$payload["limit"] : 5;
 
-// definitely don't allow division by zero
-if ($page == 0) {
-    $page = 1;
-}
-
-if ($limit == 0) {
-    $limit = 5;
-}
+// definitely don't allow division by zero or invalids
+if ($page < 1)  { $page = 1; }
+// keep limit reasonable (backstop to avoid giant pulls)
+if ($limit < 1) { $limit = 5; }
+if ($limit > 100) { $limit = 100; }
 
 // calc pagination
 $offset = ($page - 1) * $limit;  
@@ -141,8 +138,6 @@ if ($rowCnt = $resCount->fetch_assoc()) {
     $totalCount = (int)$rowCnt['cnt'];
 }
 $stmtCount->close();
-// --- end total count ---
-
 
 try {
     $stmt->execute();

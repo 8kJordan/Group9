@@ -14,7 +14,8 @@ let user = null;
 
 // Pagination
 let currentPage = 1;
-let pageLimit   = 5; // match default in SearchContacts.php (was 20, now 5)
+let pageLimit   = 5; 
+let pagerBound = false; // prevent duplicate click bindings
 
 function getUser(){
   try {
@@ -175,19 +176,37 @@ function updatePager(hasPrev, hasNext, labelText){
   const btnNext  = document.getElementById('btnNext');
   const pageInfo = document.getElementById('pageInfo');
 
-  if (pager)    pager.style.display = labelText === '' ? 'none' : '';
+  // Hide the whole pager if there's no label to show
+  if (pager) pager.style.display = labelText === '' ? 'none' : '';
 
-  if (btnPrev) btnPrev.addEventListener('click', () => {
-  if (btnPrev.classList.contains('is-off')) return;
-  searchContacts(null, currentPage - 1);
-});
-if (btnNext) btnNext.addEventListener('click', () => {
-  if (btnNext.classList.contains('is-off')) return;
-  searchContacts(null, currentPage + 1);
-});
+  // Bind click handlers ONCE to avoid stacking multiple listeners
+  if (!pagerBound) {
+    if (btnPrev) btnPrev.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (btnPrev.disabled) return;
+      searchContacts(null, currentPage - 1);
+    });
+    if (btnNext) btnNext.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (btnNext.disabled) return;
+      searchContacts(null, currentPage + 1);
+    });
+    pagerBound = true;
+  }
+
+  // Toggle disabled states (and an optional CSS class if you style it)
+  if (btnPrev) {
+    btnPrev.disabled = !hasPrev;
+    btnPrev.classList.toggle('is-off', !hasPrev);
+  }
+  if (btnNext) {
+    btnNext.disabled = !hasNext;
+    btnNext.classList.toggle('is-off', !hasNext);
+  }
 
   if (pageInfo) pageInfo.textContent = labelText || '';
 }
+
 
 
 async function searchContacts(e, pageOverride){
