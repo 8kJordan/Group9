@@ -67,7 +67,7 @@ $user = $_SESSION['user'];
 </script>
 
   <!-- JS Script -->
-<script defer src="/js/contacts.js"></script>
+<script defer src="/js/contacts.js?v=9"></script>
 
 </head>
 
