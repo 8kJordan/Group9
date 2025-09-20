@@ -148,14 +148,14 @@ function renderResults(rows){
     const tdAct = document.createElement('td');
 
     const editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-sm btn-primary me-2';   // blue, small, with right margin
+    editBtn.className = 'btn btn-outline-darkblue w-100';  
     editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit'; 
     editBtn.addEventListener('click', () => {
       editContact(r);
     });
 
     const delBtn = document.createElement('button');
-    delBtn.className = 'btn btn-sm btn-danger';          // red, small
+    delBtn.className = 'btn btn-outline-danger btn-sm';          
     delBtn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete';
     delBtn.addEventListener('click', () => {
       deleteContact(r.id);

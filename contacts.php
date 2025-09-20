@@ -67,7 +67,7 @@ $user = $_SESSION['user'];
 </script>
 
   <!-- JS Script -->
-<script defer src="/js/contacts.js?v=9"></script>
+<script defer src="/js/contacts.js?v=10"></script>
 
 </head>
 
@@ -102,7 +102,7 @@ $user = $_SESSION['user'];
         <i class="bi bi-journal-bookmark"></i> Contact Manager
       </a>
       <div class="d-flex align-items-center gap-3">
-        <span id="who" class="text-secondary"></span>
+        <span id="who" class="text-white"></span>
         <a id="logoutBtn" href="/" role="button"
            class="btn btn-outline-danger btn-sm">
           <i class="bi bi-box-arrow-right"></i> Log out
@@ -178,7 +178,7 @@ $user = $_SESSION['user'];
               <th>Last</th>
               <th>Phone</th>
               <th>Email</th>
-              <th style="width:160px">Actions</th>
+              <th style="width:200px">Actions</th>
             </tr>
           </thead>
           <tbody id="resultsBody">
