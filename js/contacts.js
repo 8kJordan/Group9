@@ -51,23 +51,27 @@ function enforceAuth(){
 
 const pager = {
   page: 1,          // 1-based index
-  pageSize: 10,     // adjust if your API expects a different size
+  pageSize: 20,     // match api default
   lastQuery: "",    // mirrors #search input
   loading: false
 };
 
 // Build the request body, keeping keys simple & stable.
-// If your PHP expects offset/limit, switch to those in this function only.
 function buildSearchPayload(extra = {}) {
   const u = requireUser(); if (!u) return {};
+  // Convert our 1-based page into offset/limit for the server
+  const offset = (pager.page - 1) * pager.pageSize;
+  const limit  = pager.pageSize;
+
   return {
     userId: u.id,
     search: pager.lastQuery,
-    page: pager.page,
-    pageSize: pager.pageSize,
+    offset,        // <-- typical PHP expects these
+    limit,         // <--
     ...extra
   };
 }
+
 
 // Enable/disable prev/next buttons
 function updatePagerButtons(hasPrev, hasNext) {
@@ -110,12 +114,6 @@ async function loadContactsForCurrentPage(extraBody = {}) {
     // Basic hasNext heuristic without total count
     let hasPrev = pager.page > 1;
     let hasNext = rows.length === pager.pageSize;
-
-    // If your API returns total, uncomment for precise next/prev:
-    // const total = Number.isFinite(res.total) ? res.total : null;
-    // if (total != null) {
-    //   hasNext = (pager.page * pager.pageSize) < total;
-    // }
 
     updatePagerButtons(hasPrev, hasNext);
   } catch (err) {
@@ -234,13 +232,6 @@ function renderResults(rows){
     return;
   }
 
-  // 🔑 Sort rows by firstName alphabetically/numerically
-  rows.sort((a, b) => {
-    const fa = (a.firstName || '').toString().toLowerCase();
-    const fb = (b.firstName || '').toString().toLowerCase();
-    return fa.localeCompare(fb, undefined, { numeric: true, sensitivity: 'base' });
-  });
-
   rows.forEach(r => {
     const tr = document.createElement('tr');
     tr.dataset.id = r.id;
@@ -299,17 +290,6 @@ async function deleteContact(id){
   try{
     const res = await api('DeleteContact.php', { userId: u.id, contactId: id });
     if (res.status !== 'success') { alert(res.desc || 'Delete failed.'); return; }
-    // Stay on the same page after delete; if the page empties, step back a page
-    // (Optional nicety—commented out minimal version keeps current page)
-    // await loadContactsForCurrentPage().then(() => {
-    //   const rows = document.querySelectorAll('#resultsBody tr');
-    //   const onlyNoResults = rows.length === 1 && rows[0].querySelector('.muted');
-    //   if (onlyNoResults && pager.page > 1) {
-    //     pager.page -= 1;
-    //     return loadContactsForCurrentPage();
-    //   }
-    // });
-
     await loadContactsForCurrentPage();
   }catch(err){
     alert('Network error.');
