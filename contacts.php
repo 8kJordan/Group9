@@ -195,6 +195,11 @@ $user = $_SESSION['user'];
 </section>
   </main>
 
+  <footer class="container">
+    <div class="d-flex justify-content-between">
+    </div>
+  </footer>
+
   <!-- Delete confirm modal -->
   <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
