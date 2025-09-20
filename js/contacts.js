@@ -49,6 +49,7 @@ function enforceAuth(){
   return true;
 }
 
+/* ================== Pagination state ================== */
 const pager = {
   page: 1,          // 1-based index
   pageSize: 20,     // match api default
@@ -56,51 +57,69 @@ const pager = {
   loading: false
 };
 
-// Build the request body, keeping keys simple & stable.
+// Build the request body; server expects offset/limit.
 function buildSearchPayload(extra = {}) {
   const u = requireUser(); if (!u) return {};
-  // Convert our 1-based page into offset/limit for the server
   const offset = (pager.page - 1) * pager.pageSize;
   const limit  = pager.pageSize;
 
   return {
     userId: u.id,
     search: pager.lastQuery,
-    offset,        // <-- typical PHP expects these
-    limit,         // <--
+    offset, // typical PHP expects these
+    limit,
     ...extra
   };
 }
 
-
-// Enable/disable prev/next buttons
-function updatePagerButtons(hasPrev, hasNext) {
+// Buttons: keep Next enabled for now; Prev only when page > 1.
+function updatePagerButtons(hasPrev /* ignore hasNext for now */) {
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   if (prevBtn) prevBtn.disabled = !hasPrev;
-  if (nextBtn) nextBtn.disabled = !hasNext;
+  if (nextBtn) nextBtn.disabled = false; // always allow Next for now
 }
 function setPagerButtonsDisabled(disabled) {
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   if (prevBtn) prevBtn.disabled = disabled || pager.page <= 1;
-  if (nextBtn) nextBtn.disabled = disabled;
+  if (nextBtn) nextBtn.disabled = !!disabled; // re-enable on finish
 }
 
-// Fetch and render contacts for current pager state
+/* --- Button handlers with logs (verify in DevTools Console) --- */
+function onPrevClick(e){
+  if (e) e.preventDefault();
+  console.log('[pager] Prev click, page=', pager.page, '->', Math.max(1, pager.page - 1));
+  if (pager.page > 1) {
+    pager.page -= 1;
+    loadContactsForCurrentPage();
+  }
+}
+function onNextClick(e){
+  if (e) e.preventDefault();
+  console.log('[pager] Next click, page=', pager.page, '->', pager.page + 1);
+  pager.page += 1;
+  loadContactsForCurrentPage();
+}
+
+/* Fetch & render current page */
 async function loadContactsForCurrentPage(extraBody = {}) {
   if (pager.loading) return;
   pager.loading = true;
   setPagerButtonsDisabled(true);
 
+  // debug: confirm payload sent
+  const payload = buildSearchPayload(extraBody);
+  console.log('[pager] load page', pager.page, 'payload:', payload);
+
   try {
-    const res = await api('SearchContacts.php', buildSearchPayload(extraBody));
+    const res = await api('SearchContacts.php', payload);
+
     if (res.status !== 'success') {
       renderResults([]);
       document.querySelector('#resultsBody').innerHTML =
         `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
-      // allow retry: prev enabled if page>1; next enabled to try again
-      updatePagerButtons(pager.page > 1, true);
+      updatePagerButtons(pager.page > 1);
       return;
     }
 
@@ -109,24 +128,23 @@ async function loadContactsForCurrentPage(extraBody = {}) {
                : Array.isArray(res) ? res
                : [];
 
+    console.log('[pager] results length=', rows.length);
     renderResults(rows);
 
-    // Basic hasNext heuristic without total count
-    let hasPrev = pager.page > 1;
-    let hasNext = rows.length === pager.pageSize;
-
-    updatePagerButtons(hasPrev, hasNext);
+    // Heuristic: keep Next enabled; Prev only if page > 1
+    updatePagerButtons(pager.page > 1);
   } catch (err) {
     console.error('Failed to load contacts:', err);
     document.querySelector('#resultsBody').innerHTML =
       '<tr><td colspan="5" class="muted">Network error.</td></tr>';
-    updatePagerButtons(pager.page > 1, true);
+    updatePagerButtons(pager.page > 1);
   } finally {
     pager.loading = false;
     setPagerButtonsDisabled(false);
   }
 }
 
+/* ================== Lifecycle ================== */
 window.addEventListener('DOMContentLoaded', () => {
   if (!enforceAuth()) return;
 
@@ -140,37 +158,32 @@ window.addEventListener('DOMContentLoaded', () => {
     logout();
   });
 
-  // Wire Prev/Next buttons
+  // Direct binding (if buttons exist at load time)
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
+  if (prevBtn) prevBtn.addEventListener('click', onPrevClick);
+  if (nextBtn) nextBtn.addEventListener('click', onNextClick);
 
-  if (prevBtn) {
-    prevBtn.addEventListener('click', () => {
-      if (pager.page > 1) {
-        pager.page -= 1;
-        loadContactsForCurrentPage();
-      }
-    });
-  }
-  if (nextBtn) {
-    nextBtn.addEventListener('click', () => {
-      pager.page += 1;
-      loadContactsForCurrentPage();
-    });
-  }
+  // Fallback: event delegation (handles late/rehydrated DOM)
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (!t) return;
+    if (t.id === 'prevBtn') onPrevClick(e);
+    if (t.id === 'nextBtn') onNextClick(e);
+  });
 
-  // Initial search & load page 1
+  // Initial search & load page 1 (resets pager via event call below if form submit)
   searchContacts(); // keeps your existing entry point
 });
 
 // Fires when page is restored from Back/Forward Cache
 window.addEventListener('pageshow', (e) => {
-  // On bfcache restore, re-enforce auth
   enforceAuth();
 });
 
 window.logout = logout; //make global
 
+/* ================== CRUD & UI ================== */
 function resetForm(){
   document.querySelector('#contactId').value = '';
   document.querySelector('#cFirst').value = '';
@@ -260,9 +273,6 @@ function renderResults(rows){
   });
 }
 
-
-// NOTE: If called via a UI event (e.g., pressing Enter in #search or a form submit),
-// we reset to page 1. Programmatic calls (initial load, save/delete) keep current page.
 async function searchContacts(e){
   if(e) e.preventDefault();
   const u = requireUser(); if(!u) return;
