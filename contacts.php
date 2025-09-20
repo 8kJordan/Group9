@@ -185,9 +185,9 @@ $user = $_SESSION['user'];
   </table>
         <!-- Pagination -->
         <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
-          <button id="prevBtn" type="button" class="btn btn-outline-secondary">Prev</button>
+          <button id="prevBtn" type="button" class="btn btn-outline-secondary btn-sm">Prev</button>
           <span id="pageInfo" class="mx-2 text-muted"></span>
-          <button id="nextBtn" type="button" class="btn btn-outline-secondary">Next</button>
+          <button id="nextBtn" type="button" class="btn btn-outline-secondary btn-sm">Next</button>
         </div>
       </div>
     </div>
