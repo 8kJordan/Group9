@@ -60,7 +60,7 @@ if ($page == 0) {
 }
 
 if ($limit == 0) {
-    $limit = 20;
+    $limit = 5;
 }
 
 // calc pagination

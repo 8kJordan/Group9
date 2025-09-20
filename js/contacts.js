@@ -1,5 +1,3 @@
-
-
 async function api(path, body){
   const r = await fetch(`/api/${path}`, {
     method: 'POST',
@@ -13,6 +11,10 @@ async function api(path, body){
 }
 
 let user = null;
+
+// Pagination
+let currentPage = 1;
+let pageLimit   = 5; // match default in SearchContacts.php (was 20, now 5)
 
 function getUser(){
   try {
@@ -63,6 +65,11 @@ window.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     logout();
   });
+
+  const btnPrev  = document.getElementById('btnPrev');
+  const btnNext  = document.getElementById('btnNext');
+  if (btnPrev) btnPrev.addEventListener('click', () => searchContacts(null, currentPage - 1));
+  if (btnNext) btnNext.addEventListener('click', () => searchContacts(null, currentPage + 1));
 
   searchContacts();
 });
@@ -162,24 +169,77 @@ function renderResults(rows){
   });
 }
 
-async function searchContacts(e){
+function updatePager(hasPrev, hasNext, labelText){
+  const pager    = document.getElementById('pager');
+  const btnPrev  = document.getElementById('btnPrev');
+  const btnNext  = document.getElementById('btnNext');
+  const pageInfo = document.getElementById('pageInfo');
+
+  if (pager)    pager.style.display = labelText === '' ? 'none' : '';
+
+  if (btnPrev) {
+    btnPrev.classList.toggle('is-off', !hasPrev);
+    btnPrev.setAttribute('aria-disabled', String(!hasPrev));
+  }
+  if (btnNext) {
+    btnNext.classList.toggle('is-off', !hasNext);
+    btnNext.setAttribute('aria-disabled', String(!hasNext));
+  }
+
+  if (pageInfo) pageInfo.textContent = labelText || '';
+}
+
+
+async function searchContacts(e, pageOverride){
   if(e) e.preventDefault();
   const u = requireUser(); if(!u) return;
 
+  // If caller passed an explicit page, honor it; otherwise keep current
+  if (typeof pageOverride === 'number') {
+    currentPage = Math.max(1, pageOverride);
+  }
+
   const term = document.querySelector('#search').value.trim();
   try{
-  const res = await api('SearchContacts.php', { userId: u.id, search: term });
-  if (res.status !== 'success') {
-    renderResults([]);
+    const res = await api('SearchContacts.php', {
+      userId: u.id,
+      search: term,
+      page:  currentPage,
+      limit: pageLimit
+    });
+
+    if (res.status !== 'success') {
+      renderResults([]);
+      document.querySelector('#resultsBody').innerHTML =
+        `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
+      updatePager(false, false, ''); // disable/hide pager on error
+      return;
+    }
+
+    const rows = res.results || [];
+    renderResults(rows);
+
+    // Update pager state
+    const hasPrev = currentPage > 1;
+    let hasNext, label;
+
+    if (typeof res.totalCount === 'number') {
+      const totalPages = Math.max(1, Math.ceil(res.totalCount / pageLimit));
+      hasNext = currentPage < totalPages;
+      label   = `${currentPage} / ${totalPages}`;
+    } else {
+      // Infer "next" when we received a full page
+      hasNext = rows.length === pageLimit;
+      label   = rows.length ? `Page ${currentPage}` : '';
+    }
+
+    updatePager(hasPrev, hasNext, label);
+
+  }catch(err){
     document.querySelector('#resultsBody').innerHTML =
-      `<tr><td colspan="5" class="muted">${esc(res.desc || 'Search failed')}</td></tr>`;
-    return;
+      '<tr><td colspan="5" class="muted">Network error.</td></tr>';
+    updatePager(false, false, ''); // disable/hide pager on error
   }
-  renderResults(res.results);
-}catch(err){
-  document.querySelector('#resultsBody').innerHTML =
-    '<tr><td colspan="5" class="muted">Network error.</td></tr>';
-}
 }
 
 function editContact(data){
