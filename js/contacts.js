@@ -222,17 +222,22 @@ async function searchContacts(e, pageOverride){
     const hasPrev = currentPage > 1;
     let hasNext, label;
 
-    if (res.pagination && typeof res.pagination.totalCount === 'number') {
+    if (res.pagination && typeof res.pagination.totalPages === 'number') {
+      const totalPages = Math.max(1, res.pagination.totalPages);
+      hasNext = currentPage < totalPages;
+      label   = `Page ${currentPage} / ${totalPages}`;
+    } else if (res.pagination && typeof res.pagination.totalCount === 'number') {
       const totalPages = Math.max(1, Math.ceil(res.pagination.totalCount / pageLimit));
       hasNext = currentPage < totalPages;
       label   = `Page ${currentPage} / ${totalPages}`;
     } else {
-    // Fallback if totalCount missing
-    hasNext = rows.length === pageLimit;
-    label   = rows.length ? `Page ${currentPage}` : '';
+      // Fallback if server didn't send totals
+      hasNext = rows.length === pageLimit;
+      label   = rows.length ? `Page ${currentPage}` : '';
     }
 
 updatePager(hasPrev, hasNext, label);
+
 
 
   }catch(err){
