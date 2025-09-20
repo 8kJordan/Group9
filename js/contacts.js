@@ -148,7 +148,7 @@ function renderResults(rows){
     const tdAct = document.createElement('td');
 
     const editBtn = document.createElement('button');
-    editBtn.className = 'btn btn-outline-darkblue w-100';  
+    editBtn.className = 'btn btn-outline-darkblue btn-sm';  
     editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit'; 
     editBtn.addEventListener('click', () => {
       editContact(r);
