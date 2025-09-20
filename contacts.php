@@ -136,10 +136,10 @@ $user = $_SESSION['user'];
               <input id="cEmail" class="form-control" placeholder="(optional)">
             </div>
             <div class="col-12 d-flex gap-2">
-              <button id="saveBtn" class="btn btn-outline-green">
+              <button id="saveBtn" class="btn btn-outline-green btn-sm">
                 <i class="bi bi-save me-1"></i> Save
               </button>
-              <button type="button" class="btn btn-outline-grey" onclick="resetForm()">
+              <button type="button" class="btn btn-outline-grey btn-sm" onclick="resetForm()">
                 <i class="bi bi-eraser me-1"></i> Clear
               </button>
             </div>
@@ -163,7 +163,7 @@ $user = $_SESSION['user'];
 <form onsubmit="searchContacts(event)" class="mb-3">
   <div class="input-group">
     <input id="search" class="form-control" placeholder="name, phone, or email">
-    <button class="btn btn-outline-darkblue" type="submit">
+    <button class="btn btn-outline-darkblue btn-sm" type="submit">
       <i class="bi bi-search"></i> Search
     </button>
   </div>
