@@ -49,7 +49,6 @@ function enforceAuth(){
   return true;
 }
 
-/* ========= Pagination: lightweight client state ========= */
 const pager = {
   page: 1,          // 1-based index
   pageSize: 10,     // adjust if your API expects a different size
@@ -129,7 +128,6 @@ async function loadContactsForCurrentPage(extraBody = {}) {
     setPagerButtonsDisabled(false);
   }
 }
-/* ========= End pagination additions ========= */
 
 window.addEventListener('DOMContentLoaded', () => {
   if (!enforceAuth()) return;
@@ -235,6 +233,14 @@ function renderResults(rows){
     tr.appendChild(td); tbody.appendChild(tr);
     return;
   }
+
+  // 🔑 Sort rows by firstName alphabetically/numerically
+  rows.sort((a, b) => {
+    const fa = (a.firstName || '').toString().toLowerCase();
+    const fb = (b.firstName || '').toString().toLowerCase();
+    return fa.localeCompare(fb, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
   rows.forEach(r => {
     const tr = document.createElement('tr');
     tr.dataset.id = r.id;
@@ -262,6 +268,7 @@ function renderResults(rows){
     tbody.appendChild(tr);
   });
 }
+
 
 // NOTE: If called via a UI event (e.g., pressing Enter in #search or a form submit),
 // we reset to page 1. Programmatic calls (initial load, save/delete) keep current page.
