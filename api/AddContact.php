@@ -140,12 +140,11 @@ function contactExists(mysqli $conn, array $payload): bool{
     $query = $conn->prepare("
     SELECT COUNT(*) AS cnt
     FROM Contacts
-    WHERE FirstName = ? 
-      AND LastName  = ? 
-      AND Email     = ? 
-      AND Phone     = ? 
-      AND UserId    = ?
-    ");
+    WHERE FirstName = ?
+        AND LastName = ?
+        AND (Email = ? OR Phone = ?)
+        AND UserId = ?
+       ");
 
     $query->bind_param("ssssi",
         $payload["firstName"],
