@@ -106,14 +106,17 @@ try {
     }
 
     // duplicate check TODO do we want to allow duplicates or not??
-    $stmt = $db->prepare(
-        "SELECT COUNT(*) AS cnt
-         FROM Contacts
-         WHERE UserId = ?
-           AND ID <> ?
-           AND (Email = ? OR Phone = ?)"
-    );
-    $stmt->bind_param("iiss", $userId, $contactId, $email, $phone);
+    $stmt = $db->prepare("
+    SELECT COUNT(*) AS cnt
+    FROM Contacts
+    WHERE FirstName = ?
+        AND LastName = ?
+        AND (Email = ? OR Phone = ?)
+        AND ID <> ?
+        AND UserId = ?
+       ");
+
+    $stmt->bind_param("ssssii", $firstName, $lastName, $email, $phone, $contactId, $userId);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     $stmt->close();
