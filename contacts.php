@@ -24,6 +24,7 @@ $user = $_SESSION['user'];
   <meta http-equiv="Expires" content="0">
 
   <title>Contact Page</title>
+  <meta name="description" content="Manage your contacts with the Contact Manager app." />
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
