@@ -111,29 +111,29 @@ $user = $_SESSION['user'];
     </div>
   </nav>
 
-  <main class="container">
+  <main class="container mt-4">
     <!-- Add / Edit -->
     <section class="mb-4">
       <div class="card">
         <div class="card-body">
-          <h2 class="h5">Add / Edit Contact</h2>
-          <form onsubmit="saveContact(event)" class="row g-3 mt-1">
+          <h2 class="h5">Add a New Contact or Edit</h2>
+          <form onsubmit="saveContact(event)" class="row g-3">
             <input type="hidden" id="contactId">
             <div class="col-md-6">
-              <label for="cFirst" class="form-label">First name</label>
-              <input id="cFirst" class="form-control" placeholder="first name" required>
+              <!--<label for="cFirst" class="form-label">First name</label>-->
+              <input id="cFirst" class="form-control" placeholder="First Name" required>
             </div>
             <div class="col-md-6">
-              <label for="cLast" class="form-label">Last name</label>
-              <input id="cLast" class="form-control" placeholder="last name" required>
+              <!--<label for="cLast" class="form-label">Last name</label>-->
+              <input id="cLast" class="form-control" placeholder="Last Name" required>
             </div>
             <div class="col-md-6">
-              <label for="cPhone" class="form-label">Phone</label>
-              <input id="cPhone" class="form-control" placeholder="(optional)">
+              <!--<label for="cPhone" class="form-label">Phone</label>-->
+              <input id="cPhone" class="form-control" placeholder="Phone (optional)">
             </div>
             <div class="col-md-6">
-              <label for="cEmail" class="form-label">Email</label>
-              <input id="cEmail" class="form-control" placeholder="(optional)">
+              <!--<label for="cEmail" class="form-label">Email</label>-->
+              <input id="cEmail" class="form-control" placeholder="Email (optional)">
             </div>
             <div class="col-12 d-flex gap-2">
               <button id="saveBtn" class="btn btn-outline-green btn-sm">
@@ -153,22 +153,19 @@ $user = $_SESSION['user'];
 <section>
   <div class="card">
     <div class="card-body">
-
       <!-- Header row -->
       <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2 class="h5 m-0">Search</h2>
+        <h2 class="h5 m-0">Search Contact</h2>
       </div>
-
       <!-- Search bar -->
       <form onsubmit="searchContacts(event)" class="mb-3">
         <div class="input-group">
-          <input id="search" class="form-control" placeholder="name, phone, or email">
+          <input id="search" class="form-control" placeholder="Name, Phone, or Email">
           <button class="btn btn-outline-darkblue btn-sm" type="submit">
             <i class="bi bi-search"></i> Search
           </button>
         </div>
       </form>
-
       <!-- Results table -->
       <div class="table-responsive">
         <table class="table table-hover align-middle w-100">
@@ -186,18 +183,15 @@ $user = $_SESSION['user'];
           </tbody>
         </table>
       </div>
-
       <!-- Pagination -->
       <div class="d-flex align-items-center justify-content-center gap-3 mt-3">
         <button id="prevBtn" type="button" class="btn btn-outline-secondary btn-sm">Prev</button>
         <span id="pageInfo" class="mx-2 text-muted"></span>
         <button id="nextBtn" type="button" class="btn btn-outline-secondary btn-sm">Next</button>
       </div>
-
     </div>
   </div>
 </section>
-
   </main>
 
   <footer class="container">
