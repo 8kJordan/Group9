@@ -72,17 +72,12 @@
               <i class="bi bi-box-arrow-in-right me-1"></i> Login
             </button>
           </form>
-          <!-- Toggle link -->
-<div class="form-text mt-2 text-center">
-  Don’t have an account? 
-  <a href="#" id="showRegister">Register</a>
-</div>
           <div class="form-text mt-2" id="out"></div>
         </div>
       </div>
     </section>
 
-    <section id="registerSection" style="display:none;">
+    <section>
       <!-- Register card -->
       <div class="card">
         <div class="card-body">
@@ -126,19 +121,6 @@
     <div class="d-flex justify-content-between">
     </div>
   </footer>
-
-  <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const registerSection = document.getElementById("registerSection");
-  const showRegister = document.getElementById("showRegister");
-
-  showRegister.addEventListener("click", (e) => {
-    e.preventDefault();
-    registerSection.style.display = "block";
-    registerSection.scrollIntoView({ behavior: "smooth" });
-  });
-});
-</script>
 
   <!-- Toast container -->
   <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
