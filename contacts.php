@@ -26,12 +26,30 @@ $user = $_SESSION['user'];
   <title>Contact Page</title>
   <meta name="description" content="Manage your contacts with the Contact Manager app." />
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" crossorigin>
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" as="style" crossorigin>
+  <link rel="preload" href="/css/theme.css?v=2" as="style">
+  <link rel="preload" href="/js/contacts.js?v=13" as="script">
+
+  <!-- Bootstrap CSS (non-blocking load) -->
+  <link rel="preload" as="style"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      onload="this.onload=null;this.rel='stylesheet'" crossorigin>
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" crossorigin></noscript>
+
   <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preload" as="style"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      onload="this.onload=null;this.rel='stylesheet'" crossorigin>
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" crossorigin></noscript>
+
   <!-- Theme overrides -->
-  <link rel="stylesheet" href="css/theme.css?v=2">
+  <link rel="preload" as="style" href="/css/theme.css?v=2" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="/css/theme.css?v=2"></noscript>
+
+  <!-- JS Script -->
+  <script defer src="/js/contacts.js?v=13"></script>
 
 <script>
   (function(){
@@ -68,9 +86,6 @@ $user = $_SESSION['user'];
     location.replace('https://group9-contacts.com' + location.pathname + location.search + location.hash);
   }
 </script>
-
-  <!-- JS Script -->
-<script defer src="/js/contacts.js?v=13"></script>
 
 </head>
 
@@ -234,7 +249,7 @@ $user = $_SESSION['user'];
   </div>
 
   <!-- Bootstrap JS bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function toast(msg, variant){
       const t = document.getElementById('toast');
