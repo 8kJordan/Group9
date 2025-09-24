@@ -1,0 +1,511 @@
+swagger: '2.0'
+info:
+  description: This is the API documentation for group9-contacts.com
+  version: 1.0.0
+  title: Contacts Application
+  contact:
+    email: jo249435@ucf.edu
+
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+paths:
+  /Auth.php:
+    post:
+      tags:
+      - Users
+      summary: Authenticate user
+      operationId: dlLogin
+      description: Authenticates a user and starts a server session.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: payload
+        description: Username and SHA-256 password hash.
+        schema:
+          $ref: '#/definitions/AuthRequest'
+      responses:
+        200:
+          description: Authentication result
+          schema:
+            $ref: '#/definitions/AuthResponse'
+          examples:
+            application/json:
+              status: success
+              isAuthenticated: true
+              firstName: Jane
+              lastName: Doe
+              userId: 50
+        400:
+          description: Invalid request or payload
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        500:
+          description: Server or database error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /Register.php:
+    post:
+      tags:
+      - Users
+      summary: Register user
+      operationId: registerUser
+      description: Creates a new user account.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: payload
+        description: New user details.
+        schema:
+          $ref: '#/definitions/RegisterRequest'
+      responses:
+        200:
+          description: Registration outcome
+          schema:
+            $ref: '#/definitions/RegisterResponse'
+        400:
+          description: Invalid request or payload
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        500:
+          description: Server or database error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /AddContact.php:
+    post:
+      tags:
+      - Contacts
+      summary: Add contact
+      operationId: addContact
+      description: Adds a new contact for a user.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: payload
+        description: Contact to create.
+        schema:
+          $ref: '#/definitions/AddContactRequest'
+      responses:
+        200:
+          description: Contact created
+          schema:
+            $ref: '#/definitions/AddContactResponse'
+        400:
+          description: Invalid request, duplicate, or bad userId
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        500:
+          description: Server or database error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /UpdateContact.php:
+    post:
+      tags:
+      - Contacts
+      summary: Update contact
+      operationId: updateContact
+      description: Updates an existing contact owned by the user.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: payload
+        description: Updated contact fields.
+        schema:
+          $ref: '#/definitions/UpdateContactRequest'
+      responses:
+        200:
+          description: Contact updated
+          schema:
+            $ref: '#/definitions/UpdateContactResponse'
+        400:
+          description: Invalid request, not found, or duplicate
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        500:
+          description: Server or database error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /DeleteContact.php:
+    post:
+      tags:
+      - Contacts
+      summary: Delete contact
+      operationId: deleteContact
+      description: Deletes a contact owned by the user.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: payload
+        description: Contact and user identifiers.
+        schema:
+          $ref: '#/definitions/DeleteContactRequest'
+      responses:
+        200:
+          description: Contact deleted
+          schema:
+            $ref: '#/definitions/DeleteContactResponse'
+        400:
+          description: Invalid request or not found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        500:
+          description: Server or database error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /SearchContacts.php:
+    post:
+      tags:
+      - Contacts
+      summary: Search contacts
+      operationId: searchContacts
+      description: Searches contacts for a user with pagination.
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: payload
+        description: Search criteria and pagination.
+        schema:
+          $ref: '#/definitions/SearchContactsRequest'
+      responses:
+        200:
+          description: Search results
+          schema:
+            $ref: '#/definitions/SearchContactsResponse'
+        400:
+          description: Invalid request or payload
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        500:
+          description: Server or database error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+
+  /Logout.php:
+    post:
+      tags:
+      - Users
+      summary: Logout user
+      operationId: logout
+      description: Destroys the current session and logs out the user.
+      produces:
+      - application/json
+      responses:
+        200:
+          description: Logged out
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+              desc:
+                type: string
+          examples:
+            application/json:
+              status: success
+              desc: Logged out
+
+definitions:
+  ErrorResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: error
+      errType:
+        type: string
+        example: InvalidRequest
+      desc:
+        type: string
+        example: Description of the error
+
+  AuthRequest:
+    type: object
+    required:
+    - username
+    - passwordHash
+    properties:
+      username:
+        type: string
+        example: user1
+      passwordHash:
+        type: string
+        example: 315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bffc941cb4726a7
+
+  AuthResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: success
+      isAuthenticated:
+        type: boolean
+        example: true
+      firstName:
+        type: string
+        example: Jane
+      lastName:
+        type: string
+        example: Doe
+      userId:
+        type: integer
+        format: int32
+        example: 50
+      userExists:
+        type: boolean
+        description: Present when authentication fails.
+
+  RegisterRequest:
+    type: object
+    required:
+    - firstName
+    - lastName
+    - username
+    - passwordHash
+    properties:
+      firstName:
+        type: string
+        example: Jane
+      lastName:
+        type: string
+        example: Doe
+      username:
+        type: string
+        example: janedoe
+      passwordHash:
+        type: string
+        example: 315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bffc941cb4726a7
+
+  RegisterResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: success
+      userCreated:
+        type: boolean
+        example: true
+      reason:
+        type: string
+        description: Present when userCreated is false.
+        example: UserAlreadyExists
+
+  Contact:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        example: 123
+      firstName:
+        type: string
+        example: John
+      lastName:
+        type: string
+        example: Smith
+      phone:
+        type: string
+        example: 555-555-1234
+      email:
+        type: string
+        example: john.smith@example.com
+
+  AddContactRequest:
+    type: object
+    required:
+    - userId
+    - firstName
+    - lastName
+    - phone
+    - email
+    properties:
+      userId:
+        type: integer
+        format: int32
+        example: 50
+      firstName:
+        type: string
+        example: John
+      lastName:
+        type: string
+        example: Smith
+      phone:
+        type: string
+        example: 555-555-1234
+      email:
+        type: string
+        example: john.smith@example.com
+
+  AddContactResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: success
+      contactCreated:
+        type: boolean
+        example: true
+      id:
+        type: integer
+        format: int32
+        example: 321
+
+  UpdateContactRequest:
+    type: object
+    required:
+    - userId
+    - contactId
+    - firstName
+    - lastName
+    - phone
+    - email
+    properties:
+      userId:
+        type: integer
+        format: int32
+        example: 50
+      contactId:
+        type: integer
+        format: int32
+        example: 321
+      firstName:
+        type: string
+        example: John
+      lastName:
+        type: string
+        example: Smith
+      phone:
+        type: string
+        example: 555-555-1234
+      email:
+        type: string
+        example: john.smith@example.com
+
+  UpdateContactResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: success
+      contactUpdated:
+        type: boolean
+        example: true
+      id:
+        type: integer
+        format: int32
+        example: 321
+
+  DeleteContactRequest:
+    type: object
+    required:
+    - userId
+    - contactId
+    properties:
+      userId:
+        type: integer
+        format: int32
+        example: 50
+      contactId:
+        type: integer
+        format: int32
+        example: 321
+
+  DeleteContactResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: success
+      contactDeleted:
+        type: boolean
+        example: true
+      id:
+        type: integer
+        format: int32
+        example: 321
+
+  SearchContactsRequest:
+    type: object
+    required:
+    - userId
+    properties:
+      userId:
+        type: integer
+        format: int32
+        example: 50
+      search:
+        type: string
+        description: Optional search term; matches first/last/phone/email.
+        example: do
+      page:
+        type: integer
+        format: int32
+        description: Optional page number (1-based).
+        example: 1
+      limit:
+        type: integer
+        format: int32
+        description: Optional page size.
+        example: 5
+
+  SearchContactsResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        example: success
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/Contact'
+      pagination:
+        $ref: '#/definitions/Pagination'
+
+  Pagination:
+    type: object
+    properties:
+      currentPage:
+        type: integer
+        format: int32
+        example: 1
+      hasNextPage:
+        type: boolean
+        example: true
+      totalCount:
+        type: integer
+        format: int32
+        example: 12
+      totalPages:
+        type: integer
+        format: int32
+        example: 3
+
+host: group9-contacts.com
+basePath: /api
+schemes:
+- https
+consumes: [application/json]
+produces: [application/json]
